@@ -11,6 +11,7 @@ function preload() {
 
 function create() {
     var wheel = game.add.sprite(0, 0, 'wheel');
+    
     wheel.animations.add('rotate');
     wheel.animations.play('rotate',30,true);
 }
