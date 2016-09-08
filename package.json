@@ -1,12 +1,19 @@
 {
-    "name": "CasinoMadness",
-    "version": "1.0.0",
-    "keywords": ["util", "functional", "server", "client", "browser"],
-    "author": "root",
-    "contributors": [],
-    "dependencies": {},
-    "scripts": {
-        "start": "node public\/index.html"
-    }
-
+  "name": "CasinoMadness",
+  "version": "1.0.0",
+  "keywords": [
+    "util",
+    "functional",
+    "server",
+    "client",
+    "browser"
+  ],
+  "author": "root",
+  "contributors": [],
+  "dependencies": {
+    "express": "^4.14.0"
+  },
+  "scripts": {
+    "start": "node public/index.html"
+  }
 }
