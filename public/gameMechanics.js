@@ -1,15 +1,22 @@
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-var canvas = document.getElementById("gameCanvas");
-var context = canvas.getContext("2d");
+/* global Phaser */
 
 var width = window.innerWidth;
 var height = window.innerHeight;
 
-canvas.width = width;
-canvas.height = height;
+var game = new Phaser.Game(width, height, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+function preload() {
+    game.load.spritesheet('wheel', 'assets/wheel.png', 600, 600, 10);
+}
+
+function create() {
+    var wheel = game.add.sprite(0, 0, 'wheel');
+    
+    var rotate = wheel.animations.add('rotate');
+    
+    wheel.animations.play('rotate', 30, true);
+}
+
+function update() {
+}
 
