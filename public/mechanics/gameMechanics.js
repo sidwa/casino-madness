@@ -15,6 +15,7 @@ function preload() {
 function create() {
     var wheel = game.add.sprite(0, 0, 'wheel');
     
+//wheel aniation with 3 loops
     wheel.animations.add('rotate');
     var count = 0;
     wheel.animations.play('rotate',30,true);
