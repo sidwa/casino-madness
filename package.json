@@ -1,12 +1,51 @@
 {
-    "name": "CasinoMadness",
-    "version": "1.0.0",
-    "keywords": ["util", "functional", "server", "client", "browser"],
-    "author": "root",
-    "contributors": [],
-    "dependencies": {},
-    "scripts": {
-        "start": "node public\/index.html"
+  "name": "casino-madness",
+  "version": "1.0.0",
+  "description": "Casino Madness is webapp which simulated real time casino experience.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify public/mechanics/gameMechanics.js > public/bundle/bundle.js",
+    "watch": "watchify index.js > public/bundle/bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/mit17k/casino-madness.git"
+  },
+  "author": "",
+  "contributors": [
+    {
+      "name": "Mitesh Khare"
+    },
+    {
+      "name": "Jacques Fernandez"
+    },
+    {
+      "name": "Siddhant Reddy"
+    },
+    {
+      "name": "Malak Parmar"
+    },
+    {
+      "name": "Vineet"
+    },
+    {
+      "name": "Bronson Mendonca"
     }
-
+  ],
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://gitlab.com/mit17k/casino-madness/issues"
+  },
+  "homepage": "https://gitlab.com/mit17k/casino-madness#README",
+  "dependencies": {
+    "express": "^4.14.0",
+    "jquery": "^3.1.0",
+    "phaser": "^2.6.2",
+    "socket.io": "^1.4.8"
+  },
+  "devDependencies": {
+    "browserify": "^13.1.0",
+    "watchify": "^3.7.0"
+  }
 }
