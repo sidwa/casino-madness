@@ -103294,25 +103294,42 @@ var height = window.innerHeight;
 var game = new Phaser.Game(width, height, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 
 function preload() {
-    game.load.spritesheet('wheel', 'assets/wheel.png', 600, 600, 30);
+    game.load.spritesheet('wheel_initiate', 'assets/spritesheets/wheel_intiatiate.png', 600, 600, 30);
+    game.load.spritesheet('wheel_rotate', 'assets/spritesheets/wheel_rotate.png', 600, 600, 30);
 }
 
 function create() {
-    var wheel = game.add.sprite(0, 0, 'wheel');
-    
-    wheel.animations.add('rotate');
-    var count = 0;
-    wheel.animations.play('rotate',30,true);
-    wheel.events.onAnimationLoop.add(function(){
-        if(count > 2){
-            wheel.animations.stop();
-        }
-        count++;
-    });
+    playWheelAnimation();
 }
 
 function update() {
     
+}
+
+function playWheelAnimation(){
+    var wheel_rotate = game.add.sprite(0, 0, 'wheel_rotate');
+    wheel_rotate.scale.setTo(1,1);
+    wheel_rotate.animations.add('rotate');
+    
+    var wheel_initiate = game.add.sprite(0, 0, 'wheel_initiate');
+    var count = 0;
+    
+    wheel_initiate.scale.setTo(1,1);
+    wheel_initiate.animations.add('rotate_begin');
+    
+    wheel_initiate.animations.play('rotate_begin',15,false);
+    wheel_initiate.events.onAnimationComplete.add(function(){
+        wheel_initiate.destroy();
+        
+        wheel_rotate.animations.play('rotate',15,true);
+        wheel_rotate.events.onAnimationLoop.add(function(){
+           if(count >= 2){
+                wheel_rotate.animations.stop();
+                //wheel_rotate.destroy();
+           }
+           count++;
+        });
+    });
 }
 
 },{"phaser/build/custom/p2":1,"phaser/build/custom/phaser-split":2,"phaser/build/custom/pixi":3}]},{},[5]);
