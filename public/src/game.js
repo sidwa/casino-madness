@@ -14,7 +14,7 @@ var cashbalance;
 $.ajax({
     'async': false,
     'global': false,
-    'url': 'mechanics/test.json',
+    'url': 'src/test.json',
     'dataType': "json",
     'success': function (data) {
         playerid = data.userid;
@@ -24,25 +24,60 @@ $.ajax({
 });
 
 /* canvas height and width */
-var width = 1366; // window.innerWidth
-var height = 768; // window.innerHeight
+var width = window.innerWidth;
+var height = window.innerHeight;
 
-/* global Phaser */
-var game = new Phaser.Game(width, height, Phaser.AUTO, '');
+/* Initialize Phaser */
+var game = new Phaser.Game(width , height , Phaser.AUTO);
 
-var Roullet = function() {}
+var bootState = function(game) {
+    console.log("Initialize");
+};
 
-Roullet.prototype{
+bootState.prototype = {
     preload: function(){
-        game.load.image('wheel' , 'assets/sprites/Roulettewheel.png');
-    }
+        this.load.image('loading', 'assets/gears.gif');
+    },
     create: function(){
-        game.add.sprite('wheel' , 300 , 300);
+        this.state.start('roulletPreloadGame');
     }
-    update: function(){
+};
 
+var roulletPreloadGame = function(game){
+    console.log("Loading roullet game");
+};
+
+roulletPreloadGame.prototype = {
+    preload: function () {
+        this.loading = this.add.sprite((height/2), (width/2), 'loading');
+        this.loading.anchor.setTo(0.5, 0.5);
+
+        this.load.image('wheel' , 'assets/sprites/Roulettewheel.png');
+    },
+    create: function () {
+        this.state.start('roulletRenderGame');
     }
-}
+};
 
-game.state.add('Roullet', Roullet);
-game.state.start('Roullet');
+var roulletRenderGame = function(game) {
+    console.log("Render roullet game");
+};
+
+roulletRenderGame.prototype = {
+
+    create: function() {
+        this.wheel = this.add.sprite(300, 300, 'wheel');
+        this.wheel.scale.setTo(0.6, 0.6);
+        this.wheel.anchor.setTo(0.5 , 0.5);
+    },
+
+    update: function() {
+        this.wheel.angle += 2;
+    },
+};
+
+game.state.add('bootState' , bootState);
+game.state.add('roulletPreloadGame' , roulletPreloadGame);
+game.state.add('roulletRenderGame', roulletRenderGame);
+
+game.state.start('bootState');
