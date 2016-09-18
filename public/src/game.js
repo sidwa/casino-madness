@@ -36,7 +36,7 @@ var bootState = function(game) {
 
 bootState.prototype = {
     preload: function(){
-        this.load.image('loading', 'assets/gears.gif');
+        this.load.image('loading', 'assets/sprites/loading.png');
     },
     create: function(){
         this.state.start('roulletPreloadGame');
@@ -73,7 +73,7 @@ roulletRenderGame.prototype = {
 
     update: function() {
         this.wheel.angle += 2;
-    },
+    }
 };
 
 game.state.add('bootState' , bootState);
