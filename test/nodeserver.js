@@ -24,6 +24,9 @@ server.get('/', function (req, res, next) {
   res.sendFile(__dirname + '/index.html');
 });
 
+server.get('/jsFunctions.js', function (req, res, next) {
+  res.sendFile(__dirname + '/jsFunctions.js');
+});
 
 //socket connection
 io.on('connection', function (socket) {
@@ -60,9 +63,14 @@ io.on('connection', function (socket) {
     });
   });
 
+  socket.on('placeBet', function(betVal){
+    console.log("Bet Placed "+betVal);
+  });
+  
   socket.on('disconnect', function () {
     console.log('User disconnected');
   });
+
 });
 
 /*
