@@ -70,8 +70,10 @@ roulletPreloadGame.prototype = {
 
 var count = 0;
 var rotate = true;
+var play = true;
 var drop_begin = false;
 var drop = false;
+var pin = false;
 var decelaration = 0.007;
 var speed = 2;
     
@@ -104,6 +106,9 @@ roulletRenderGame.prototype = {
     },
 
     update: function() {
+        if(play){
+            this.spin_wheel.angle -= 2;
+        }
         if(rotate){
             this.ball.angle += 2;
             if(game.math.roundTo(this.ball.angle, 0) === 0){
@@ -111,6 +116,7 @@ roulletRenderGame.prototype = {
                 if(count === 2){
                     rotate = false;
                     drop_begin =true;
+                    count = 0;
                 }
             }
         }
@@ -128,6 +134,18 @@ roulletRenderGame.prototype = {
             //this.ball.angle += speed;
             if(this.ball.anchor.y < 5.2){
                 drop = false;
+                pin = true;
+            }
+        }
+        if(pin){
+            this.ball.angle -= 2;
+            //console.log(game.math.roundTo(this.ball.angle, 0));
+            if(game.math.roundTo(this.ball.angle, 0) >= 0 && game.math.roundTo(this.ball.angle, 0) <= 1){
+                count++;
+                if(count === 1){
+                    pin = false;
+                    play= false;
+                }
             }
         }
     },
