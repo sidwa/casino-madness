@@ -1,5 +1,5 @@
 
-/* global Phaser */
+/* global Phaser, PIXI */
 
 /* jquery node module */
 //var $ = require('jquery');
@@ -25,19 +25,19 @@ $.ajax({
     }
 });
 
+/* Initialize Phaser */
+var game = new Phaser.Game(1366, 768 , Phaser.CANVAS);
+
 function goFull(){
-    
+    game.scale.startFullScreen(false);
 }
 
-BALL = function (game, output_number) {
-    this.game = game;
-    this.output_number = output_number;
-};
+function startRoullet(){
+    goFull();
+    this.state.start('roulletRenderGame');
+}
 
-/* Initialize Phaser */
-var game = new Phaser.Game(1366, 675 , Phaser.CANVAS);
-
-var bootState = function(game) {
+var bootState = function() {
     console.log("Initialize");
 };
 
@@ -50,7 +50,7 @@ bootState.prototype = {
     }
 };
 
-var roulletPreloadGame = function(game){
+var roulletPreloadGame = function(){
     console.log("Loading roullet game");
 };
 
@@ -61,38 +61,44 @@ roulletPreloadGame.prototype = {
 
         this.load.image('wheel_frame' , 'assets/sprites/wheelframe.png');
         this.load.image('spin_wheel' , 'assets/sprites/spinwheel.png');
-        this.load.image('ball' , 'assets/sprites/ball.png');
+        this.load.image('table' , 'assets/sprites/table.png');
+        
+        game.load.spritesheet('startButton', 'assets/spritesheet/startButton.png', 200, 100);
     },
     create: function () {
-        this.state.start('roulletRenderGame');
+        this.state.start('roulletStartGame');
     }
 };
 
-var count = 0;
-var rotate = true;
-var play = true;
-var drop_begin = false;
-var drop = false;
-var pin = false;
-var decelaration = 0.007;
-var speed = 2;
-    
-    
-var roulletRenderGame = function(game) {
+var roulletStartGame = function(){
+    console.log("Roullet Game start screen");
+};
+
+roulletStartGame.prototype = {
+    create: function() {
+        this.startButton = this.add.button(game.world.centerX - 95, 400, 'startButton', startRoullet, this, 2, 1, 0);
+    }
+};    
+
+var roulletRenderGame = function() {
     console.log("Render roullet game");
 };
 
 roulletRenderGame.prototype = {
     
     create: function() {
+        game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
         game.time.desiredFps = 60;
         
         console.log(window.innerHeight);
         console.log(window.innerWidth);
         
-        this.wheel_frame = this.add.sprite(300, 300, 'wheel_frame');
-        this.spin_wheel = this.add.sprite(300, 300, 'spin_wheel');
-        this.ball = this.add.sprite(300, 300, 'ball');
+        this.table = this.add.sprite(game.world.centerX, game.world.centerY-75, 'table');
+        this.table.scale.setTo(0.8, 0.8);
+        this.table.anchor.setTo(0.5, 0.5);
+        
+        this.wheel_frame = this.add.sprite(300, game.world.centerY-75, 'wheel_frame');
+        this.spin_wheel = this.add.sprite(300, game.world.centerY-75, 'spin_wheel');
         
         this.wheel_frame.scale.setTo(0.6, 0.6);
         this.wheel_frame.anchor.setTo(0.5 , 0.5);
@@ -100,63 +106,20 @@ roulletRenderGame.prototype = {
         this.spin_wheel.scale.setTo(0.6, 0.6);
         this.spin_wheel.anchor.setTo(0.5 , 0.5);
         
-        this.ball.scale.setTo(0.6, 0.6);
-        this.ball.anchor.setTo(0.5, 10);
-        
     },
 
     update: function() {
-        if(play){
-            this.spin_wheel.angle -= 2;
-        }
-        if(rotate){
-            this.ball.angle += 2;
-            if(game.math.roundTo(this.ball.angle, 0) === 0){
-                count++;
-                if(count === 2){
-                    rotate = false;
-                    drop_begin =true;
-                    count = 0;
-                }
-            }
-        }
-        if(drop_begin){
-            if(speed <= 0.56){
-                drop_begin = false;
-                drop = true;
-            }
-            speed -= decelaration;
-            this.ball.angle += speed;
-            this.ball.anchor.y -= 0.009;
-        }
-        if(drop){
-            this.ball.anchor.y -= 0.145;
-            //this.ball.angle += speed;
-            if(this.ball.anchor.y < 5.2){
-                drop = false;
-                pin = true;
-            }
-        }
-        if(pin){
-            this.ball.angle -= 2;
-            //console.log(game.math.roundTo(this.ball.angle, 0));
-            if(game.math.roundTo(this.ball.angle, 0) >= 0 && game.math.roundTo(this.ball.angle, 0) <= 1){
-                count++;
-                if(count === 1){
-                    pin = false;
-                    play= false;
-                }
-            }
-        }
+        
     },
     
     render:function() {
-        //game.debug.text(this.ball.anchor.y, 50, 50);
+        game.debug.inputInfo(32, 32);
     }
 };
 
 game.state.add('bootState' , bootState);
 game.state.add('roulletPreloadGame' , roulletPreloadGame);
+game.state.add('roulletStartGame', roulletStartGame);
 game.state.add('roulletRenderGame', roulletRenderGame);
 
 game.state.start('bootState');
