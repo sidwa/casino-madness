@@ -75,3 +75,10 @@ for(var i=0;i<taus.bets.length;i++){
 	document.getElementById("1000").innerHTML+="slots"+taus.bets[i].slots+"<br>";
 	document.getElementById("1000").innerHTML+="numbers"+taus.bets[i].quantity+"<br>";
 }*/
+
+/*
+OUTPUT
+
+{sidwa:[{"th":0,"fi":0,"hu":6,"slots":[1,2,3,4]},{"th":1,"fi":2,"hu":6,"slots":[2,4,5,8]}]}
+
+*/
