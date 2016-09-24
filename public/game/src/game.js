@@ -9,22 +9,6 @@
 // window.p2 = require('phaser/build/custom/p2');
 // window.Phaser = require('phaser/build/custom/phaser-split');
 
-var gameid;
-var playerid;
-var cashbalance;
-
-$.ajax({
-    'async': false,
-    'global': false,
-    'url': 'src/test.json',
-    'dataType': "json",
-    'success': function (data) {
-        playerid = data.userid;
-        cashbalance = data.cashbalance;
-        gameid = data.gameid;
-    }
-});
-
 /* Initialize Phaser */
 var game = new Phaser.Game(1366, 768 , Phaser.CANVAS);
 
