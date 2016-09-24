@@ -43,8 +43,8 @@ roulletPreloadGame.prototype = {
         this.loading = this.add.sprite(700, 300, 'loading');
         this.loading.anchor.setTo(0.5, 0.5);
 
-        this.load.image('wheel_frame' , 'assets/sprites/wheelframe.png');
-        this.load.image('spin_wheel' , 'assets/sprites/spinwheel.png');
+        this.load.image('wheel', 'assets/sprites/wheel.png');
+        this.load.image('selector', 'assets/sprites/selector.png');
         this.load.image('table' , 'assets/sprites/table.png');
 
         this.load.image('slot_0', 'assets/sprites/87x150/0.png');
@@ -102,7 +102,7 @@ roulletPreloadGame.prototype = {
         this.load.image('slot_even', 'assets/sprites/146x92/even.png');
         this.load.image('slot_odd', 'assets/sprites/146x92/odd.png');
         
-        game.load.spritesheet('startButton', 'assets/spritesheet/startButton.png', 200, 100);
+        this.load.spritesheet('startButton', 'assets/spritesheet/startButton.png', 200, 100);
     },
     create: function () {
         this.state.start('roulletStartGame');
@@ -140,17 +140,17 @@ roulletRenderGame.prototype = {
         var table_anchor_x = 0.5;
         var table_anchor_y = 0.5;
 
-        var wheel_frame_x = 300;
-        var wheel_frame_y = game.world.centerY-75;
-        var wheel_frame_scale = 0.6;
-        var wheel_frame_anchor_x = 0.5;
-        var wheel_frame_anchor_y = 0.5;
+        var wheel_x = 300;
+        var wheel_y = game.world.centerY-75;
+        var wheel_scale = 0.7;
+        var wheel_anchor_x = 0.5;
+        var wheel_anchor_y = 0.5;
 
-        var spin_wheel_x = 300;
-        var spin_wheel_y = game.world.centerY-75;
-        var spin_wheel_scale = 0.6;
-        var spin_wheel_anchor_x = 0.5;
-        var spin_wheel_anchor_y = 0.5;
+        var selector_x = 300;
+        var selector_y = game.world.centerY-75;
+        var selector_scale = 0.7;
+        var selector_anchor_x = 0.5;
+        var selector_anchor_y = 0.5;
 
         var number_position_x = 550;
         var number_position_y = 150;
@@ -168,17 +168,17 @@ roulletRenderGame.prototype = {
         var number_block_4_resolution_x = 146;
         var number_block_4_resolution_y = 92;
 
-        this.table = this.add.sprite(table_x, table_y, 'table');
-        this.table.scale.setTo(table_scale, table_scale);
-        this.table.anchor.setTo(table_anchor_x, table_anchor_y);
+        // this.table = this.add.sprite(table_x, table_y, 'table');
+        // this.table.scale.setTo(table_scale, table_scale);
+        // this.table.anchor.setTo(table_anchor_x, table_anchor_y);
         
-        this.wheel_frame = this.add.sprite(wheel_frame_x, wheel_frame_y, 'wheel_frame');
-        this.wheel_frame.scale.setTo(wheel_frame_scale, wheel_frame_scale);
-        this.wheel_frame.anchor.setTo(wheel_frame_anchor_x, wheel_frame_anchor_y);
+        this.wheel = this.add.sprite(wheel_x, wheel_y, 'wheel');
+        this.wheel.scale.setTo(wheel_scale, wheel_scale);
+        this.wheel.anchor.setTo(wheel_anchor_x, wheel_anchor_y);
 
-        this.spin_wheel = this.add.sprite(spin_wheel_x, spin_wheel_y, 'spin_wheel');
-        this.spin_wheel.scale.setTo(spin_wheel_scale, spin_wheel_scale);
-        this.spin_wheel.anchor.setTo(spin_wheel_anchor_x, spin_wheel_anchor_y);
+        this.selector = this.add.sprite(selector_x, selector_y, 'selector');
+        this.selector.scale.setTo(selector_scale, selector_scale);
+        this.selector.anchor.setTo(selector_anchor_x, selector_anchor_y);
 
         this.slot_0 = this.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*0)), (number_position_y+(number_scale*number_block_1_resolution_y*0)) , 'slot_0');
         this.slot_0.scale.setTo(number_scale, number_scale);
@@ -299,7 +299,7 @@ roulletRenderGame.prototype = {
     },
 
     update: function() {
-        
+        this.selector.angle += 2;
     },
     
     render:function() {
