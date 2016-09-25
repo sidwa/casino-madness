@@ -1,14 +1,18 @@
-/*JSON FORMAT
-    [                                            this JSON string is array of objects 
-		{"username":"mit17k"},                   first element is ALWAYS player object with username attr
-		{th:0,fi:0,hu:6,slots:[1,2,3,4]},		 second element onwards bet objects
-		{th:0,fi:0,hu:6,slots:["1st in 12"]}
+/*JSON FORMAT                                                   array of bet objects
+    [                                     
+		{username:"mit17k",th:0,fi:0,hu:6,slots:[1,2,3,4]},		username must with each bet objects
+		{username:"mit17k",th:0,fi:0,hu:6,slots:["1st in 12"]}
 	]
 */
 
+// required Global variables
 var bets=[];
+var username="mit17k";
+// end required Global variables
+
 
 function Bet(th/*1000coin*/,fi/*500coin*/,hu/*100coin*/,slots){  //constructor for a bet
+	this.username=username;
 	this.th=th;
 	this.fi=fi;
 	this.hu=hu;
@@ -46,11 +50,7 @@ function placeBet(newBet){      //pushes the new bet into the list of all placed
 	}
 }
 
-var player=new Object;
-player.username="sidwa";
-
 function confirmBet(){  // converts js objects to JSON for transmission
-	bets.unshift(player);
 	return JSON.stringify(bets);
 }
 
@@ -67,7 +67,6 @@ placeBet(new Bet(1,2,3,slots));
 console.log(confirmBet());
 //comment it or delete it 
 var js=JSON.parse(confirmBet());
-console.log(js.username);
 //var data=JSON.parse(dat)
 /*var taus=JSON.parse(data.coin.th);
 var fi=JSON.parse(data.coin.fi);
