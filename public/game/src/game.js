@@ -32,7 +32,7 @@ bootState.prototype = {
         game.load.image('loading', 'assets/sprites/loading.png');
     },
     create: function(){
-        game.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;
+        //game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         game.state.start('roulletPreloadGame');
     }
 };
@@ -102,9 +102,8 @@ var normal_slots;
 var special_slots;
 
 var pointer;
-var count = 0;
-var click = false;
-var first_input = null;
+var normal_input_mode = false;
+var bet_input = [];
 
 var angle_map = [
     {"slot": "00" , "position": "0"},
@@ -188,7 +187,12 @@ function out (sprite){
     sprite.alpha = 1;
 }
 
-function place(sprite){
+function place_multiple(bet){
+    console.log(bet);
+    return true;
+}
+
+function place_single(sprite){
     console.log(sprite.key);
 }
 
@@ -272,6 +276,7 @@ roulletPreloadGame.prototype = {
 
         game.load.image('pointer', 'assets/sprites/pointer.png');
         
+        game.load.image('bg', 'assets/background.png');
         game.load.spritesheet('startButton', 'assets/spritesheet/startButton.png', 200, 100);
         game.load.spritesheet('quitButton', 'assets/spritesheet/quitButton.png', 250, 100);
         game.load.spritesheet('fullButton', 'assets/spritesheet/fullButton.png', 250, 100);
@@ -299,7 +304,6 @@ roulletRenderGame.prototype = {
     
     create: function() {
         game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
-        // game.scale.scaleMode = Phaser.ScaleManager.RESIZE;
         game.time.desiredFps = 60;
         game.input.mouse.capture = true;
         
@@ -333,6 +337,8 @@ roulletRenderGame.prototype = {
 
         var fullButton_scale = 0.4;
         var quitButton_scale = 0.4;
+
+        game.add.tileSprite(0, 0, 1366, 768, 'bg');
 
         quitButton = game.add.button(1200, 10, 'quitButton', quit, this, 2, 1, 0);
         fullButton = game.add.button(20, 10, 'fullButton', goFull, this, 2, 1, 0);
@@ -484,52 +490,49 @@ roulletRenderGame.prototype = {
         else{
             fullButton.visible = true;
         }
-
-        pointer.x = game.input.mousePointer.x-20;
-        pointer.y = game.input.mousePointer.y-20;
-
+        
+        normal_slots.onChildInputOver.add(function (){
+            normal_input_mode = true;
+        }, this);
+        normal_slots.onChildInputOut.add(function () {
+            normal_input_mode = false;
+        }, this);
+        
+        if(normal_input_mode){
+            pointer.x = game.input.mousePointer.x-20;
+            pointer.y = game.input.mousePointer.y-20;
+        }
+        else{
+            pointer.x = 0;
+            pointer.y = 0;
+        }
+        
         normal_slots.forEach(function (item){
             if(checkOverlap(item , pointer)){
-                if(game.input.activePointer.leftButton.isDown && click){
-                    if(first_input === null){
-                        first_input = item.key;
-                    }
-                    if(count < 4){
-                        if(count === 0){
-                            place(item);
-                        }
-                        if(count >= 1){
-                            if(first_input === item.key){
-                                click = false;
-                            }
-                            else{
-                                place(item);
-                            }
-                        }
-                    }
-                    else{
-                        click = false;
-                    }
-                    count++;
-                }
-                game.input.activePointer.leftButton.onUp.add(function () {
-                    click = true;
-                    count = 0;
-                    first_input = null;
-                }, this);
                 over(item);
+                if(game.input.activePointer.leftButton.isDown){
+                    if($.inArray(item.key, bet_input) === -1){
+                        bet_input.push(item.key);
+                    }
+                }
+                if(game.input.activePointer.leftButton.isUp && bet_input.length > 0){
+                    if(place_multiple(bet_input)){
+                        bet_input = [];
+                    }
+                }
             }
             else{
                 out(item);
             }
         });
+        
         special_slots.onChildInputOver.add(over, this);
         special_slots.onChildInputOut.add(out, this);
-        special_slots.onChildInputDown.add(place, this);
+        special_slots.onChildInputDown.add(place_single, this);
     },
     
     render:function() {
-        //game.debug.inputInfo(32, 32);
+        game.debug.inputInfo(32, 32);
     }
 };
 
