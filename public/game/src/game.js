@@ -1,5 +1,4 @@
-
-/* global Phaser, PIXI */
+/* global Phaser */
 
 /* jquery node module */
 //var $ = require('jquery');
@@ -9,17 +8,22 @@
 // window.p2 = require('phaser/build/custom/p2');
 // window.Phaser = require('phaser/build/custom/phaser-split');
 
-/* Initialize Phaser */
-var game = new Phaser.Game(1366, 768 , Phaser.CANVAS);
+/* New Phaser Instance*/
+var game = new Phaser.Game(1366, 768, Phaser.CANVAS);
 
 var loading;
 var startButton;
 
-function goFull(){
-    game.scale.startFullScreen(false);
+function goFull() {
+    if (game.scale.isFullScreen){
+        game.scale.stopFullScreen();
+    }
+    else{
+        game.scale.startFullScreen(false);
+    }
 }
 
-function quit(){
+function quit() {
     alert('Fcking Noob!');
 }
 
@@ -28,11 +32,14 @@ var bootState = function() {
 };
 
 bootState.prototype = {
-    preload: function(){
+    preload: function() {
         game.load.image('loading', 'assets/sprites/loading.png');
     },
-    create: function(){
-        //game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+    create: function() {
+        game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+        game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
+        game.time.desiredFps = 60;
+        game.input.mouse.capture = true;
         game.state.start('roulletPreloadGame');
     }
 };
@@ -100,124 +107,196 @@ var slot_black;
 
 var normal_slots;
 var special_slots;
+var input_poker_chip_group;
 
 var pointer;
 var normal_input_mode = false;
 var bet_input = [];
 
-var angle_map = [
-    {"slot": "00" , "position": "0"},
-    {"slot": "27" , "position": "1"},
-    {"slot": "10" , "position": "2"},
-    {"slot": "25" , "position": "3"},
-    {"slot": "29" , "position": "4"},
-    {"slot": "12" , "position": "5"},
-    {"slot": "8" , "position": "6"},
-    {"slot": "19" , "position": "7"},
-    {"slot": "31" , "position": "8"},
-    {"slot": "18" , "position": "9"},
-    {"slot": "6" , "position": "10"},
-    {"slot": "21" , "position": "11"},
-    {"slot": "33" , "position": "12"},
-    {"slot": "16" , "position": "13"},
-    {"slot": "4" , "position": "14"},
-    {"slot": "23" , "position": "15"},
-    {"slot": "33" , "position": "16"},
-    {"slot": "14" , "position": "17"},
-    {"slot": "2" , "position": "18"},
-    {"slot": "0" , "position": "19"},
-    {"slot": "28" , "position": "20"},
-    {"slot": "9" , "position": "21"},
-    {"slot": "26" , "position": "22"},
-    {"slot": "30" , "position": "23"},
-    {"slot": "11" , "position": "24"},
-    {"slot": "7" , "position": "25"},
-    {"slot": "20" , "position": "26"},
-    {"slot": "32" , "position": "27"},
-    {"slot": "17" , "position": "28"},
-    {"slot": "5" , "position": "29"},
-    {"slot": "22" , "position": "30"},
-    {"slot": "34" , "position": "31"},
-    {"slot": "15" , "position": "32"},
-    {"slot": "3" , "position": "33"},
-    {"slot": "24" , "position": "34"},
-    {"slot": "36" , "position": "35"},
-    {"slot": "31" , "position": "36"},
-    {"slot": "1" , "position": "37"}
-];
+var pokerchip_100;
+var pokerchip_500;
+var pokerchip_1000;
 
-function startRoullet(){
+var selectchip;
+var hud_background;
+var total_bets = [];
+
+function startRoullet() {
     goFull();
     game.state.start('roulletRenderGame');
 }
 
-function spin(slot){
+SELECTOR = function (game, slot_number) {
 
-    var selector_x = 300;
-    var selector_y = game.world.centerY-75;
-    var selector_scale = 0.65;
-    var selector_anchor_x = 0.5;
-    var selector_anchor_y = 0.5;
-    var selector_angle;
-    var time = 5000;
+    this.game = game;
+    this.selector_x = 300;
+    this.selector_y = game.world.centerY - 75;
+    this.selector_scale = 0.65;
+    this.selector_anchor_x = 0.5;
+    this.selector_anchor_y = 0.5;
+    this.time = 7000;
 
-    this.selector = game.add.sprite(selector_x, selector_y, 'selector');
-    this.selector.scale.setTo(selector_scale, selector_scale);
-    this.selector.anchor.setTo(selector_anchor_x, selector_anchor_y);
+    this.angle_map = [
+        { "slot": "00", "position": "0" },
+        { "slot": "27", "position": "1" },
+        { "slot": "10", "position": "2" },
+        { "slot": "25", "position": "3" },
+        { "slot": "29", "position": "4" },
+        { "slot": "12", "position": "5" },
+        { "slot": "8", "position": "6" },
+        { "slot": "19", "position": "7" },
+        { "slot": "31", "position": "8" },
+        { "slot": "18", "position": "9" },
+        { "slot": "6", "position": "10" },
+        { "slot": "21", "position": "11" },
+        { "slot": "33", "position": "12" },
+        { "slot": "16", "position": "13" },
+        { "slot": "4", "position": "14" },
+        { "slot": "23", "position": "15" },
+        { "slot": "33", "position": "16" },
+        { "slot": "14", "position": "17" },
+        { "slot": "2", "position": "18" },
+        { "slot": "0", "position": "19" },
+        { "slot": "28", "position": "20" },
+        { "slot": "9", "position": "21" },
+        { "slot": "26", "position": "22" },
+        { "slot": "30", "position": "23" },
+        { "slot": "11", "position": "24" },
+        { "slot": "7", "position": "25" },
+        { "slot": "20", "position": "26" },
+        { "slot": "32", "position": "27" },
+        { "slot": "17", "position": "28" },
+        { "slot": "5", "position": "29" },
+        { "slot": "22", "position": "30" },
+        { "slot": "34", "position": "31" },
+        { "slot": "15", "position": "32" },
+        { "slot": "3", "position": "33" },
+        { "slot": "24", "position": "34" },
+        { "slot": "36", "position": "35" },
+        { "slot": "31", "position": "36" },
+        { "slot": "1", "position": "37" }
+    ];
 
-    for(var i = 0 ; i < 38 ; i++){
-        if(angle_map[i].slot === slot){
-            selector_angle = angle_map[i].position;
-            console.log(selector_angle);
+    this.selector_sprite = game.add.sprite(this.selector_x, this.selector_y, 'selector');
+    this.selector_sprite.scale.setTo(this.selector_scale, this.selector_scale);
+    this.selector_sprite.anchor.setTo(this.selector_anchor_x, this.selector_anchor_y);
+
+    for (var i = 0; i < 38; i++) {
+        if (this.angle_map[i].slot === slot_number) {
+            this.selector_angle = this.angle_map[i].position;
             break;
         }
     }
-    selector_angle = selector_angle * 9.47;
-    console.log(selector_angle);
-    var rounds = game.rnd.between(4, 6);
-    var spinTween = game.add.tween(this.selector).to({angle: 360 * rounds + selector_angle}, time, Phaser.Easing.Quadratic.InOut, true);
 
-}
+    this.selector_angle = this.selector_angle * 9.47;
+    this.rounds = game.rnd.between(4, 7);
+};
 
-function over (sprite){
-    sprite.alpha = 0.5;
-}
+SELECTOR.prototype.play = function () {
+    this.spinTween = game.add.tween(this.selector_sprite).to({ angle: 360 * this.rounds + this.selector_angle }, this.time, Phaser.Easing.Quadratic.InOut, true);
+};
 
-function out (sprite){
-    sprite.alpha = 1;
-}
+// POKER_CHIP = function (game, color, slot_info, no_of_chips, chip_value) {
+//     this.game = game;
+//     this.color = color;
+//     this.slot_info = slot_info;
+//     this.no_of_chips = no_of_chips;
+//     this.chip_value = this.chip_value;
 
-function place_multiple(bet){
-    console.log(bet);
-    return true;
-}
+//     this.poker_chip = null;
+//     this.poker_chip_x = ;
+//     this.poker_chip_y = ;
+//     this.poker_chip_scale = 0.5;
+//     this.poker_chip_anchor_x = 0.5;
+//     this.poker_chip_anchor_y = 0.5;
 
-function place_single(sprite){
-    console.log(sprite.key);
-}
+//     if(this.color === "blue"){
+//         if(this.chip_value === 100){
+//             this.game.add.sprite()
+//         }
+//         else if(this.chip_value === 500){
 
-function checkOverlap(sprite, rectangle) {
+//         }
+//         else if(this.chip_value === 1000){
 
-    var bounds = sprite.getBounds();
-    var rect_sprite = new Phaser.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
+//         }
+//         else{
+//             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
+//         }
+//     }
+//     else if(this.color === "green"){
+//         if(this.chip_value === 100){
 
-    var intersection = Phaser.Rectangle.intersects(rect_sprite, rectangle);
+//         }
+//         else if(this.chip_value === 500){
 
-    return intersection;
-}
+//         }
+//         else if(this.chip_value === 1000){
 
-var roulletPreloadGame = function(){
+//         }
+//         else{
+//             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
+//         }
+//     }
+//     else if(this.color === "grey"){
+//         if(this.chip_value === 100){
+
+//         }
+//         else if(this.chip_value === 500){
+
+//         }
+//         else if(this.chip_value === 1000){
+
+//         }
+//         else{
+//             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
+//         }
+//     }
+//     else if(this.color === "purple"){
+//         if(this.chip_value === 100){
+
+//         }
+//         else if(this.chip_value === 500){
+
+//         }
+//         else if(this.chip_value === 1000){
+
+//         }
+//         else{
+//             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
+//         }
+//     }
+//     else if(this.color === "red"){
+//         if(this.chip_value === 100){
+
+//         }
+//         else if(this.chip_value === 500){
+
+//         }
+//         else if(this.chip_value === 1000){
+
+//         }
+//         else{
+//             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
+//         }
+//     }
+//     else {
+//         console.log("POKER CHIP ERROR CODE: COLOR MISSING");
+//     }
+// };
+
+var roulletPreloadGame = function() {
     console.log("Loading roullet game");
 };
 
 roulletPreloadGame.prototype = {
-    preload: function () {
+    preload: function() {
         loading = game.add.sprite(700, 300, 'loading');
         loading.anchor.setTo(0.5, 0.5);
 
         game.load.image('wheel', 'assets/sprites/wheel.png');
         game.load.image('selector', 'assets/sprites/selector.png');
-        game.load.image('table' , 'assets/sprites/table.png');
+        game.load.image('table', 'assets/sprites/table.png');
 
         game.load.image('slot_0', 'assets/sprites/87x150/0.png');
         game.load.image('slot_00', 'assets/sprites/87x150/00.png');
@@ -274,19 +353,40 @@ roulletPreloadGame.prototype = {
         game.load.image('slot_even', 'assets/sprites/146x92/even.png');
         game.load.image('slot_odd', 'assets/sprites/146x92/odd.png');
 
+        game.load.image('blue_100', 'assets/sprites/pokerchips/b100.png');
+        game.load.image('blue_500', 'assets/sprites/pokerchips/b500.png');
+        game.load.image('blue_1000', 'assets/sprites/pokerchips/b1000.png');
+
+        game.load.image('green_100', 'assets/sprites/pokerchips/g100.png');
+        game.load.image('green_500', 'assets/sprites/pokerchips/g500.png');
+        game.load.image('green_1000', 'assets/sprites/pokerchips/g1000.png');
+
+        game.load.image('grey_100', 'assets/sprites/pokerchips/gr100.png');
+        game.load.image('grey_500', 'assets/sprites/pokerchips/gr500.png');
+        game.load.image('grey_1000', 'assets/sprites/pokerchips/gr1000.png');
+
+        game.load.image('purple_100', 'assets/sprites/pokerchips/p100.png');
+        game.load.image('purple_500', 'assets/sprites/pokerchips/p500.png');
+        game.load.image('purple_1000', 'assets/sprites/pokerchips/p1000.png');
+
+        game.load.image('red_100', 'assets/sprites/pokerchips/r100.png');
+        game.load.image('red_500', 'assets/sprites/pokerchips/r500.png');
+        game.load.image('red_1000', 'assets/sprites/pokerchips/r1000.png');
+
         game.load.image('pointer', 'assets/sprites/pointer.png');
-        
+
+        game.load.image('hud_background', 'assets/sprites/hud_background.png');
         game.load.image('bg', 'assets/background.png');
         game.load.spritesheet('startButton', 'assets/spritesheet/startButton.png', 200, 100);
-        game.load.spritesheet('quitButton', 'assets/spritesheet/quitButton.png', 250, 100);
-        game.load.spritesheet('fullButton', 'assets/spritesheet/fullButton.png', 250, 100);
+        game.load.spritesheet('quitButton', 'assets/spritesheet/quitButton.png', 125, 100);
+        game.load.spritesheet('fullButton', 'assets/spritesheet/fullButton.png', 125, 100);
     },
-    create: function () {
+    create: function() {
         game.state.start('roulletRenderGame');
     }
 };
 
-var roulletStartGame = function(){
+var roulletStartGame = function() {
     console.log("Roullet Game start screen");
 };
 
@@ -294,27 +394,24 @@ roulletStartGame.prototype = {
     create: function() {
         startButton = game.add.button(game.world.centerX - 95, 400, 'startButton', startRoullet, this, 2, 1, 0);
     }
-};    
+};
 
 var roulletRenderGame = function() {
     console.log("Render roullet game");
 };
 
 roulletRenderGame.prototype = {
-    
+
     create: function() {
-        game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
-        game.time.desiredFps = 60;
-        game.input.mouse.capture = true;
-        
+        /*.............positions and scale of sprites...............*/
         var table_x = game.world.centerX;
-        var table_y = game.world.centerY-75;
+        var table_y = game.world.centerY - 75;
         var table_scale = 0.8;
         var table_anchor_x = 0.5;
         var table_anchor_y = 0.5;
 
         var wheel_x = 300;
-        var wheel_y = game.world.centerY-75;
+        var wheel_y = game.world.centerY - 75;
         var wheel_scale = 0.65;
         var wheel_anchor_x = 0.5;
         var wheel_anchor_y = 0.5;
@@ -331,213 +428,272 @@ roulletRenderGame.prototype = {
 
         var number_block_3_resolution_x = 292;
         var number_block_3_resolution_y = 92;
-        
+
         var number_block_4_resolution_x = 146;
-        var number_block_4_resolution_y = 92;
+        //var number_block_4_resolution_y = 92;
 
-        var fullButton_scale = 0.4;
-        var quitButton_scale = 0.4;
+        var fullButton_scale = 0.3;
+        var quitButton_scale = 0.3;
 
+        /*.................Static UI with relative positioning...................*/
         game.add.tileSprite(0, 0, 1366, 768, 'bg');
 
-        quitButton = game.add.button(1200, 10, 'quitButton', quit, this, 2, 1, 0);
-        fullButton = game.add.button(20, 10, 'fullButton', goFull, this, 2, 1, 0);
+        quitButton = game.add.button(1300, 10, 'quitButton', quit, this, 2, 1, 0);
+        fullButton = game.add.button(1250, 10, 'fullButton', goFull, this, 2, 1, 0);
 
         quitButton.scale.setTo(quitButton_scale, quitButton_scale);
         fullButton.scale.setTo(fullButton_scale, fullButton_scale);
-    
+
         table = game.add.sprite(table_x, table_y, 'table');
         table.scale.setTo(table_scale, table_scale);
         table.anchor.setTo(table_anchor_x, table_anchor_y);
-        
+
         wheel = game.add.sprite(wheel_x, wheel_y, 'wheel');
         wheel.scale.setTo(wheel_scale, wheel_scale);
         wheel.anchor.setTo(wheel_anchor_x, wheel_anchor_y);
 
-        slot_0 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*0)), (number_position_y+(number_scale*number_block_1_resolution_y*0)) , 'slot_0');
+        slot_0 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 0)), (number_position_y + (number_scale * number_block_1_resolution_y * 0)), 'slot_0');
         slot_0.scale.setTo(number_scale, number_scale);
-        slot_00 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*0)), (number_position_y+(number_scale*number_block_1_resolution_y*1)), 'slot_00');
+        slot_00 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 0)), (number_position_y + (number_scale * number_block_1_resolution_y * 1)), 'slot_00');
         slot_00.scale.setTo(number_scale, number_scale);
 
-        slot_1 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)), (number_position_y+(number_scale*number_block_2_resolution_y*2)), 'slot_1');
+        slot_1 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1)), (number_position_y + (number_scale * number_block_2_resolution_y * 2)), 'slot_1');
         slot_1.scale.setTo(number_scale, number_scale);
-        slot_2 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)), (number_position_y+(number_scale*number_block_2_resolution_y*1)), 'slot_2');
+        slot_2 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1)), (number_position_y + (number_scale * number_block_2_resolution_y * 1)), 'slot_2');
         slot_2.scale.setTo(number_scale, number_scale);
-        slot_3 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)), (number_position_y+(number_scale*number_block_2_resolution_y*0)), 'slot_3');
+        slot_3 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1)), (number_position_y + (number_scale * number_block_2_resolution_y * 0)), 'slot_3');
         slot_3.scale.setTo(number_scale, number_scale);
 
-        slot_4 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*1)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_4');
+        slot_4 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 1)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_4');
         slot_4.scale.setTo(number_scale, number_scale);
-        slot_5 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*1)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_5');
+        slot_5 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 1)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_5');
         slot_5.scale.setTo(number_scale, number_scale);
-        slot_6 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*1)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_6');
+        slot_6 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 1)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_6');
         slot_6.scale.setTo(number_scale, number_scale);
 
-        slot_7 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*2)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_7');
+        slot_7 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 2)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_7');
         slot_7.scale.setTo(number_scale, number_scale);
-        slot_8 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*2)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_8');
+        slot_8 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 2)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_8');
         slot_8.scale.setTo(number_scale, number_scale);
-        slot_9 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*2)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_9');
+        slot_9 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 2)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_9');
         slot_9.scale.setTo(number_scale, number_scale);
 
-        slot_10 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*3)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_10');
+        slot_10 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 3)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_10');
         slot_10.scale.setTo(number_scale, number_scale);
-        slot_11 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*3)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_11');
+        slot_11 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 3)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_11');
         slot_11.scale.setTo(number_scale, number_scale);
-        slot_12 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*3)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_12');
+        slot_12 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 3)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_12');
         slot_12.scale.setTo(number_scale, number_scale);
 
-        slot_13 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*4)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_13');
+        slot_13 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 4)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_13');
         slot_13.scale.setTo(number_scale, number_scale);
-        slot_14 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*4)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_14');
+        slot_14 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 4)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_14');
         slot_14.scale.setTo(number_scale, number_scale);
-        slot_15 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*4)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_15');
+        slot_15 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 4)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_15');
         slot_15.scale.setTo(number_scale, number_scale);
 
-        slot_16 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*5)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_16');
+        slot_16 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 5)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_16');
         slot_16.scale.setTo(number_scale, number_scale);
-        slot_17 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*5)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_17');
+        slot_17 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 5)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_17');
         slot_17.scale.setTo(number_scale, number_scale);
-        slot_18 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*5)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_18');
+        slot_18 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 5)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_18');
         slot_18.scale.setTo(number_scale, number_scale);
 
-        slot_19 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*6)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_19');
+        slot_19 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 6)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_19');
         slot_19.scale.setTo(number_scale, number_scale);
-        slot_20 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*6)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_20');
+        slot_20 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 6)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_20');
         slot_20.scale.setTo(number_scale, number_scale);
-        slot_21 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*6)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_21');
+        slot_21 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 6)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_21');
         slot_21.scale.setTo(number_scale, number_scale);
 
-        slot_22 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*7)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_22');
+        slot_22 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 7)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_22');
         slot_22.scale.setTo(number_scale, number_scale);
-        slot_23 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*7)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_23');
+        slot_23 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 7)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_23');
         slot_23.scale.setTo(number_scale, number_scale);
-        slot_24 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*7)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_24');
+        slot_24 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 7)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_24');
         slot_24.scale.setTo(number_scale, number_scale);
 
-        slot_25 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*8)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_25');
+        slot_25 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 8)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_25');
         slot_25.scale.setTo(number_scale, number_scale);
-        slot_26 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*8)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_26');
+        slot_26 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 8)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_26');
         slot_26.scale.setTo(number_scale, number_scale);
-        slot_27 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*8)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_27');
+        slot_27 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 8)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_27');
         slot_27.scale.setTo(number_scale, number_scale);
 
-        slot_28 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*9)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_28');
+        slot_28 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 9)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_28');
         slot_28.scale.setTo(number_scale, number_scale);
-        slot_29 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*9)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_29');
+        slot_29 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 9)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_29');
         slot_29.scale.setTo(number_scale, number_scale);
-        slot_30 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*9)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_30');
+        slot_30 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 9)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_30');
         slot_30.scale.setTo(number_scale, number_scale);
 
-        slot_31 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*10)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_31');
+        slot_31 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 10)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_31');
         slot_31.scale.setTo(number_scale, number_scale);
-        slot_32 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*10)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_32');
+        slot_32 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 10)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_32');
         slot_32.scale.setTo(number_scale, number_scale);
-        slot_33 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*10)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_33');
+        slot_33 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 10)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_33');
         slot_33.scale.setTo(number_scale, number_scale);
 
-        slot_34 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*11)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_34');
+        slot_34 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 11)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_34');
         slot_34.scale.setTo(number_scale, number_scale);
-        slot_35 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*11)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_35');
+        slot_35 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 11)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_35');
         slot_35.scale.setTo(number_scale, number_scale);
-        slot_36 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*11)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_36');
+        slot_36 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 11)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_36');
         slot_36.scale.setTo(number_scale, number_scale);
 
-        slot_2to1_1 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*12)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*2)), 'slot_2to1_1');
+        slot_2to1_1 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 12)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 2)), 'slot_2to1_1');
         slot_2to1_1.scale.setTo(number_scale, number_scale);
-        slot_2to1_2 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*12)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*1)), 'slot_2to1_2');
+        slot_2to1_2 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 12)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 1)), 'slot_2to1_2');
         slot_2to1_2.scale.setTo(number_scale, number_scale);
-        slot_2to1_3 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_2_resolution_x*12)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*0)), 'slot_2to1_3');
+        slot_2to1_3 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_2_resolution_x * 12)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 0)), 'slot_2to1_3');
         slot_2to1_3.scale.setTo(number_scale, number_scale);
 
-        slot_1_12 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_3_resolution_x*0)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*3)), 'slot_1-12');
+        slot_1_12 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_3_resolution_x * 0)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 3)), 'slot_1-12');
         slot_1_12.scale.setTo(number_scale, number_scale);
-        slot_2_12 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_3_resolution_x*1)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*3)), 'slot_2-12');
+        slot_2_12 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_3_resolution_x * 1)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 3)), 'slot_2-12');
         slot_2_12.scale.setTo(number_scale, number_scale);
-        slot_3_12 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_3_resolution_x*2)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*3)), 'slot_3-12');
+        slot_3_12 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_3_resolution_x * 2)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 3)), 'slot_3-12');
         slot_3_12.scale.setTo(number_scale, number_scale);
 
-        slot_1_to_18 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_4_resolution_x*0)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*3)+(number_scale*number_block_3_resolution_y*1)), 'slot_1-18');
+        slot_1_to_18 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_4_resolution_x * 0)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 3) + (number_scale * number_block_3_resolution_y * 1)), 'slot_1-18');
         slot_1_to_18.scale.setTo(number_scale, number_scale);
-        slot_even = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_4_resolution_x*1)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*3)+(number_scale*number_block_3_resolution_y*1)), 'slot_even');
+        slot_even = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_4_resolution_x * 1)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 3) + (number_scale * number_block_3_resolution_y * 1)), 'slot_even');
         slot_even.scale.setTo(number_scale, number_scale);
-        slot_red = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_4_resolution_x*2)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*3)+(number_scale*number_block_3_resolution_y*1)), 'slot_red');
+        slot_red = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_4_resolution_x * 2)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 3) + (number_scale * number_block_3_resolution_y * 1)), 'slot_red');
         slot_red.scale.setTo(number_scale, number_scale);
-        slot_black = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_4_resolution_x*3)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*3)+(number_scale*number_block_3_resolution_y*1)), 'slot_black');
+        slot_black = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_4_resolution_x * 3)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 3) + (number_scale * number_block_3_resolution_y * 1)), 'slot_black');
         slot_black.scale.setTo(number_scale, number_scale);
-        slot_odd = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_4_resolution_x*4)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*3)+(number_scale*number_block_3_resolution_y*1)), 'slot_odd');
+        slot_odd = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_4_resolution_x * 4)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 3) + (number_scale * number_block_3_resolution_y * 1)), 'slot_odd');
         slot_odd.scale.setTo(number_scale, number_scale);
-        slot_19_to_36 = game.add.sprite((number_position_x+(number_scale*number_block_1_resolution_x*1)+(number_scale*number_block_4_resolution_x*5)), (number_position_y+(number_scale*number_block_1_resolution_y*0)+(number_scale*number_block_2_resolution_y*3)+(number_scale*number_block_3_resolution_y*1)), 'slot_19-36');
+        slot_19_to_36 = game.add.sprite((number_position_x + (number_scale * number_block_1_resolution_x * 1) + (number_scale * number_block_4_resolution_x * 5)), (number_position_y + (number_scale * number_block_1_resolution_y * 0) + (number_scale * number_block_2_resolution_y * 3) + (number_scale * number_block_3_resolution_y * 1)), 'slot_19-36');
         slot_19_to_36.scale.setTo(number_scale, number_scale);
 
-        pointer = new Phaser.Rectangle(0, 0, 40, 40);
-        
+        /* Game Input Mechanism */
+        pointer = new Phaser.Rectangle(0, 0, 25, 25);
+
         normal_slots = game.add.group();
         normal_slots.inputEnableChildren = true;
-        normal_slots.addMultiple([slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_12, slot_13, slot_14, slot_15, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_22, slot_23, slot_24, slot_25, slot_26, slot_27, slot_28, slot_29,slot_30, slot_31, slot_32, slot_33, slot_34, slot_35, slot_36]);
+        normal_slots.addMultiple([slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_12, slot_13, slot_14, slot_15, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_22, slot_23, slot_24, slot_25, slot_26, slot_27, slot_28, slot_29, slot_30, slot_31, slot_32, slot_33, slot_34, slot_35, slot_36]);
 
         special_slots = game.add.group();
         special_slots.inputEnableChildren = true;
         special_slots.addMultiple([slot_0, slot_00, slot_2to1_1, slot_2to1_2, slot_2to1_3, slot_1_12, slot_2_12, slot_3_12, slot_1_to_18, slot_19_to_36, slot_odd, slot_even, slot_red, slot_black]);
 
+        hud_background = game.add.sprite(0, game.world.centerY+220, 'hud_background');
+        hud_background.scale.setTo(1, 0.8);
+        hud_background.alpha = 0.7;
+
+        pokerchip_100 = game.add.sprite(game.world.centerX-300, game.world.centerY+300, 'blue_100');
+        pokerchip_100.scale.setTo(0.15, 0.15);
+        pokerchip_100.anchor.setTo(0.5,0.5);
+
+        pokerchip_500 = game.add.sprite(game.world.centerX-150, game.world.centerY+300, 'blue_500');
+        pokerchip_500.scale.setTo(0.15, 0.15);
+        pokerchip_500.anchor.setTo(0.5,0.5);
+
+        pokerchip_1000 = game.add.sprite(game.world.centerX, game.world.centerY+300, 'blue_1000');
+        pokerchip_1000.scale.setTo(0.15, 0.15);
+        pokerchip_1000.anchor.setTo(0.5,0.5);
+
+        input_poker_chip_group = game.add.group();
+        input_poker_chip_group.inputEnableChildren = true;
+        input_poker_chip_group.addMultiple([pokerchip_100, pokerchip_500, pokerchip_1000]);
+
+        var slots = [1, 2, 4, 5];
+        var poker_bet_chip_x = slot_19.x + (number_scale * number_block_2_resolution_y) - (512*0.08/2);
+        var poker_bet_chip_y = slot_19.y;
     },
 
     update: function() {
 
-        if(game.scale.isFullScreen){
-            fullButton.visible = false;
-        }
-        else{
-            fullButton.visible = true;
-        }
-        
-        normal_slots.onChildInputOver.add(function (){
+        /* check game input every frame */
+        normal_slots.onChildInputOver.add(function() {
             normal_input_mode = true;
         }, this);
-        normal_slots.onChildInputOut.add(function () {
+        normal_slots.onChildInputOut.add(function() {
             normal_input_mode = false;
         }, this);
-        
-        if(normal_input_mode){
-            pointer.x = game.input.mousePointer.x-20;
-            pointer.y = game.input.mousePointer.y-20;
-        }
-        else{
+
+        if (normal_input_mode) {
+            pointer.x = game.input.mousePointer.x - 20;
+            pointer.y = game.input.mousePointer.y - 20;
+        } else {
             pointer.x = 0;
             pointer.y = 0;
         }
-        
-        normal_slots.forEach(function (item){
-            if(checkOverlap(item , pointer)){
+
+        normal_slots.forEach(function(item) {
+            if (checkOverlap(item, pointer)) {
                 over(item);
-                if(game.input.activePointer.leftButton.isDown){
-                    if($.inArray(item.key, bet_input) === -1){
+                if (game.input.activePointer.leftButton.isDown) {
+                    if ($.inArray(item.key, bet_input) === -1) {
                         bet_input.push(item.key);
                     }
                 }
-                if(game.input.activePointer.leftButton.isUp && bet_input.length > 0){
-                    if(place_multiple(bet_input)){
+                if (game.input.activePointer.leftButton.isUp && bet_input.length > 0) {
+                    if (place_multiple(bet_input)) {
                         bet_input = [];
                     }
                 }
-            }
-            else{
+            } else {
                 out(item);
             }
         });
-        
+
         special_slots.onChildInputOver.add(over, this);
         special_slots.onChildInputOut.add(out, this);
         special_slots.onChildInputDown.add(place_single, this);
+
+        /* poker chip input */
+        input_poker_chip_group.onChildInputOver.add(over, this);
+        input_poker_chip_group.onChildInputOut.add(out, this);
+        input_poker_chip_group.onChildInputDown.add(selectChip, this);
+
     },
-    
-    render:function() {
+
+    render: function() {
         game.debug.inputInfo(32, 32);
     }
 };
 
-game.state.add('bootState' , bootState);
-game.state.add('roulletPreloadGame' , roulletPreloadGame);
+function over(sprite) {
+    sprite.alpha = 0.5;
+}
+
+function out(sprite) {
+    sprite.alpha = 1;
+}
+
+function place_multiple(bet) {
+    console.log(bet);
+    return true;
+}
+
+function selectChip (sprite){
+    selectchip = sprite.key;
+}
+
+function place_single(sprite) {
+    console.log(sprite.key);
+    return true;
+}
+
+function drawBets(json_string){
+
+}
+
+function checkOverlap(sprite, rectangle) {
+
+    var bounds = sprite.getBounds();
+    var rect_sprite = new Phaser.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
+
+    var intersection = Phaser.Rectangle.intersects(rect_sprite, rectangle);
+
+    return intersection;
+}
+
+game.state.add('bootState', bootState);
+game.state.add('roulletPreloadGame', roulletPreloadGame);
 game.state.add('roulletStartGame', roulletStartGame);
 game.state.add('roulletRenderGame', roulletRenderGame);
 
