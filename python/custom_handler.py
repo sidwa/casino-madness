@@ -3,7 +3,7 @@ import json;
 
 class CustomHandler(hs.BaseHTTPRequestHandler):
 
-	def extract_data(self,url):
+	def extract_json_data(self,url):
 		url = url.strip("GET /?").strip(" HTTP/1.1").replace("%22","\"");
 		print("Got : "+url);
 		return(json.loads(url));
@@ -13,9 +13,13 @@ class CustomHandler(hs.BaseHTTPRequestHandler):
 		self.send_header("content-type","text/JSON");
 		self.send_header("content-encoding","ASCII")
 		self.end_headers();
-		data = self.extract_data(self.requestline);
+
+		data = self.extract_json_data(self.requestline); #returns JSON object
+
 		res_json = dict();
-		res_json["message"] = "Hello "+data["name"];
+
+		res_json["message"] = "Hello "+data["name"]; # Work on dresponse
 		response = bytes(json.dumps(res_json),"ASCII")
+
 		self.wfile.write(response);
 		return;
