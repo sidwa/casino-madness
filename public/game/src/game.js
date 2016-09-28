@@ -156,6 +156,7 @@ var chip_select;
 var pointer;
 var normal_input_mode = false;
 var bet_input = [];
+var final_bets = [];
 
 SELECTOR = function (game, slot_number) {
 
@@ -227,14 +228,20 @@ SELECTOR.prototype.play = function () {
     this.spinTween = game.add.tween(this.selector_sprite).to({ angle: 360 * this.rounds + this.selector_angle }, this.time, Phaser.Easing.Quadratic.InOut, true);
 };
 
-POKER_CHIP = function (game, color, slot_info, no_of_chips, chip_value) {
+POKER_CHIP = function (game, color, slot_info, chip_value) {
     this.game = game;
     this.color = color;
     this.slot_info = slot_info;
-    this.no_of_chips = no_of_chips;
-    this.chip_value = this.chip_value;
+    this.no_of_chips = this.slot_info.length;
+    this.chip_value = chip_value;
     this.sprite_group = null;
     this.sprite_index = null;
+    this.poker_chip_x = null;
+    this.poker_chip_y = null;
+    this.poker_chip = null;
+    this.poker_chip_scale = 0.059;
+    this.poker_chip_anchor_x = 0.5;
+    this.poker_chip_anchor_y = 0.5;
 
     var slot_key_to_sprite = [
         {"key":"00", "sprite_group": "special", "sprite_index" : 1},
@@ -275,33 +282,80 @@ POKER_CHIP = function (game, color, slot_info, no_of_chips, chip_value) {
         {"key":"34", "sprite_group": "normal", "sprite_index" : 33},
         {"key":"35", "sprite_group": "normal", "sprite_index" : 34},
         {"key":"36", "sprite_group": "normal", "sprite_index" : 35},
+        {"key":"2to1_1", "sprite_group": "special", "sprite_index" : 2},
+        {"key":"2to1_2", "sprite_group": "special", "sprite_index" : 3},
+        {"key":"2to1_3", "sprite_group": "special", "sprite_index" : 4},
+        {"key":"1st12", "sprite_group": "special", "sprite_index" : 5},
+        {"key":"2nd12", "sprite_group": "special", "sprite_index" : 6},
+        {"key":"3rd12", "sprite_group": "special", "sprite_index" : 7},
+        {"key":"1to18", "sprite_group": "special", "sprite_index" : 8},
+        {"key":"19to36", "sprite_group": "special", "sprite_index" : 9},
+        {"key":"odd", "sprite_group": "special", "sprite_index" : 10},
+        {"key":"even", "sprite_group": "special", "sprite_index" : 11},
+        {"key":"red", "sprite_group": "special", "sprite_index" : 12},
+        {"key":"black", "sprite_group": "special", "sprite_index" : 13},
         ];
 
     for(var i = 0 ; i < slot_key_to_sprite.length ; i++){
-        if(this.slot_info === slot_key_to_sprite[i].key){
+        if(this.slot_info[0] === slot_key_to_sprite[i].key){
             this.sprite_group = slot_key_to_sprite[i].sprite_group;
             this.sprite_index = slot_key_to_sprite[i].sprite_index;
+            break;
         }
     }
-    var poker_bet_chip_x = slot_19.x + (number_scale * number_block_2_resolution_y) - (512*0.08/2);
-    var poker_bet_chip_y = slot_19.y;
-
-    this.poker_chip = null;
-    this.poker_chip_x = ;
-    this.poker_chip_y = ;
-    this.poker_chip_scale = 0.5;
-    this.poker_chip_anchor_x = 0.5;
-    this.poker_chip_anchor_y = 0.5;
+    if(this.sprite_group === 'normal'){
+        if(this.no_of_chips === 1){
+            this.poker_chip_x = (normal_slots.children[this.sprite_index].centerX);
+            this.poker_chip_y = (normal_slots.children[this.sprite_index].centerY);
+        }
+        else if (this.no_of_chips === 2){
+            var second_chip_index = null;
+            for(var j = 0 ; j < slot_key_to_sprite.length ; j++){
+                if(this.slot_info[1] === slot_key_to_sprite[j].key){
+                    second_chip_index = slot_key_to_sprite[j].sprite_index;
+                    break;
+                }
+            }
+            if((normal_slots.children[this.sprite_index].y > normal_slots.children[second_chip_index].y) && (normal_slots.children[this.sprite_index].x === normal_slots.children[second_chip_index].x)){
+                this.poker_chip_x = (normal_slots.children[this.sprite_index].centerX);
+                this.poker_chip_y = (normal_slots.children[this.sprite_index].y);
+            }
+            else if((normal_slots.children[this.sprite_index].x < normal_slots.children[second_chip_index].x) && (normal_slots.children[this.sprite_index].y === normal_slots.children[second_chip_index].y)){
+                this.poker_chip_x = (normal_slots.children[second_chip_index].x);
+                this.poker_chip_y = (normal_slots.children[this.sprite_index].centerY);   
+            }
+            else {
+                console.log('Position not found');
+            }
+        }
+        else if (this.no_of_chips === 4){
+            this.poker_chip_x = normal_slots.children[this.sprite_index].x + (number_scale * number_block_2_resolution_y) - (512*this.poker_chip_scale/2);
+            this.poker_chip_y = normal_slots.children[this.sprite_index].y;
+        }
+    }
+    else if(this.sprite_group === 'special'){
+        this.poker_chip_x = special_slots.children[this.sprite_index].centerX;
+        this.poker_chip_y = special_slots.children[this.sprite_index].centerY;
+    }
+    else {
+        console.log('Group not found');
+    }
 
     if(this.color === "blue"){
         if(this.chip_value === 100){
-            this.game.add.sprite()
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'blue_100');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 500){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'blue_500');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 1000){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'blue_1000');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else{
             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
@@ -309,13 +363,19 @@ POKER_CHIP = function (game, color, slot_info, no_of_chips, chip_value) {
     }
     else if(this.color === "green"){
         if(this.chip_value === 100){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'green_100');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 500){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'green_500');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 1000){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'green_1000');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else{
             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
@@ -323,13 +383,19 @@ POKER_CHIP = function (game, color, slot_info, no_of_chips, chip_value) {
     }
     else if(this.color === "grey"){
         if(this.chip_value === 100){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'grey_100');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 500){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'grey_500');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 1000){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'grey_1000');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else{
             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
@@ -337,13 +403,19 @@ POKER_CHIP = function (game, color, slot_info, no_of_chips, chip_value) {
     }
     else if(this.color === "purple"){
         if(this.chip_value === 100){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'purple_100');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 500){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'purple_500');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 1000){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'purple_1000');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else{
             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
@@ -351,13 +423,19 @@ POKER_CHIP = function (game, color, slot_info, no_of_chips, chip_value) {
     }
     else if(this.color === "red"){
         if(this.chip_value === 100){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'red_100');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 500){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'red_500');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else if(this.chip_value === 1000){
-
+            this.poker_chip = this.game.add.sprite(this.poker_chip_x, this.poker_chip_y , 'red_1000');
+            this.poker_chip.anchor.setTo(this.poker_chip_anchor_x, this.poker_chip_anchor_y);
+            this.poker_chip.scale.setTo(this.poker_chip_scale, this.poker_chip_scale);
         }
         else{
             console.log("POKER CHIP ERROR CODE: CHIP VALUE MISSING");
@@ -485,6 +563,7 @@ function place_bet(bet_input){
             }
         }
     }
+
     console.log(final_bet_array);
     return true;
 }
@@ -865,3 +944,41 @@ game.state.add('roulletStartGame', roulletStartGame);
 game.state.add('roulletRenderGame', roulletRenderGame);
 
 game.state.start('bootState');
+
+
+/*
+    //bootState
+
+    //GET gameid, playerid
+    var playinfo = function (playerid, gameid){
+        return jsonobject; // playerid, lobbyid, cashbalance
+    }
+
+    // var playerinfo = function (lobbyid){
+        return playerinfo;
+    }
+    // timeout
+    var isRoundOver = function (lobbyid){
+        return false;
+        // timeout return true;
+    }
+    if(isRoundOver){
+        input = false;
+        var number = function getRn(lobbyid , bets){
+            return int;son // playerid , newcashbalance
+        }
+        var other_player_bets = function (lobbyid){
+            return array; // totolbets
+        }
+    }
+
+    // wheel animation start 
+    var isBetSend = function (lobbyid , bets){
+        return true;
+    }
+    (isBetSend && isWheelanimationfinished){
+        function roundover(lobbyid){
+
+        }
+    }
+*/
