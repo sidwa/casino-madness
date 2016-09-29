@@ -1,3 +1,5 @@
+/nbproject
+/python/__pycache__
 /node_modules
 .vscode/
 jsconfig.json
