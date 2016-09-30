@@ -26,7 +26,7 @@ function getPlayers(){
                 return;
             }
             if(ajx.readyState==4 || ajx.readyState==0){
-                ajx.open("GET","../getPlayers",true);
+                ajx.open("GET","localhost:800/getPlayers",true);
                 ajx.onreadystatechange=function(){
                     var response;
                     if(ajx.readyState==4 && ajx.status==200){
@@ -49,7 +49,7 @@ function payout(){
                 return;
             }
             if(ajx.readyState==4 || ajx.readyState==0){
-                ajx.open("GET","../payout",true);
+                ajx.open("GET","localhost:800/payout",true);
                 ajx.onreadystatechange=function(){
                     var response;
                     if(ajx.readyState==4 && ajx.status==200){
@@ -72,7 +72,7 @@ function payout(){
                 return;
             }
             if(ajx.readyState==4 || ajx.readyState==0){
-                ajx.open("GET","../timer",true);
+                ajx.open("GET","localhost:800/timer",true);
                 ajx.onreadystatechange=function(){
                     var response;
                     if(ajx.readyState==4 && ajx.status==200){
