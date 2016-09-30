@@ -9,13 +9,24 @@
 // window.Phaser = require('phaser/build/custom/phaser-split');
 
 /* New Phaser Instance*/
-var game = new Phaser.Game(1366, 768, Phaser.CANVAS);
+$.urlParam = function(name){
+	var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+	return results[1] || 0;
+};
 
-var username = "mit17k";
-var cashbalance = 25000;
-var color = "blue";
-var lobbyid = null;
-var gameid = 1;
+function userinfo (userid){
+    var json = {"username": "mit17k", "color":"blue", "cashbalance": 25000, "lobbyid": 3};
+
+    return json;
+}
+
+var username = $.urlParam('username');
+var user_info = userinfo(username);
+var color = user_info.color;
+var cashbalance = user_info.cashbalance;
+var lobbyid = user_info.lobbyid;
+
+var game = new Phaser.Game(1366, 768, Phaser.CANVAS);
 
 var loading;
 var startButton;
@@ -156,6 +167,17 @@ var pokerchip_100;
 var pokerchip_500;
 var pokerchip_1000;
 
+var main_user_avatar = null;
+var main_user_avatar_x = (1366/2)-600;
+var main_user_avatar_y = (768/2)+280;
+var main_user_avatar_scale = 0.15;
+var main_user_avatar_anchor_x = 0.5;
+var main_user_avatar_anchor_y = 0.5;
+
+var main_user_name;
+var main_user_name_x = (1366/2)-600;
+var main_user_name_y = (768/2)+350;
+
 /* input */
 var selected_chip_value = null;
 var chip_select;
@@ -166,8 +188,12 @@ var bet_input = [];
 var final_bets_json_object = [];
 var final_bet_json_string = null;
 
-/*poker chip render*/
+/* poker chip render */
 var chip_group = [];
+
+/* game mechanics */
+var isTimout = false;
+var isInputEnable = true;
 
 SELECTOR = function (game, slot_number) {
 
@@ -261,7 +287,7 @@ POKER_CHIP = function (game, color, slot_info, chip_value, isRandom) {
         this.poker_chip_anchor_x = randomIntFromInterval(1, 10) / 10;
         this.poker_chip_anchor_y = randomIntFromInterval(1, 10) / 10;
     }
-    console.log("x = "+this.poker_chip_anchor_x+" y = "+this.poker_chip_anchor_y);
+    //console.log("x = "+this.poker_chip_anchor_x+" y = "+this.poker_chip_anchor_y);
     var slot_key_to_sprite = [
         {"key":"00", "sprite_group": "special", "sprite_index" : 1},
         {"key":"0", "sprite_group": "special", "sprite_index" : 0},
@@ -479,15 +505,15 @@ CHIP_SELECTOR.prototype.createSelector = function (){
     this.chip_selector_y = 0;
 
     if(this.chip_value === 100){
-        this.chip_selector_x = game.world.centerX-300;
+        this.chip_selector_x = game.world.centerX-450;
         this.chip_selector_y = game.world.centerY+300;
     }
     else if(this.chip_value === 500){
-        this.chip_selector_x = game.world.centerX-150;
+        this.chip_selector_x = game.world.centerX-350;
         this.chip_selector_y = game.world.centerY+300;
     }
     else if(this.chip_value === 1000){
-        this.chip_selector_x = game.world.centerX;
+        this.chip_selector_x = game.world.centerX-250;
         this.chip_selector_y = game.world.centerY+300;
     }
     else{
@@ -562,6 +588,7 @@ function drawBets(bets,color){
             this.hu = json_array[i].hu;
             this.slot = json_array[i].slot;
             this.chip_color = json_array[i].color;
+            // bets_placed 
 
             if(this.th > 0){
                 for(j = 1; j <= this.th; j++){
@@ -725,6 +752,16 @@ function place_bet(bet_input){
     return true;
 }
 
+function isTimoutTrue (lobbyid){
+    var number = MATH.random();
+    if(number % 2 === 0){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
 var roulletPreloadGame = function() {
     console.log("Loading roullet game");
 };
@@ -818,9 +855,17 @@ roulletPreloadGame.prototype = {
         game.load.image('chip_selector', 'assets/sprites/chip_selector.png');
         game.load.image('hud_background', 'assets/sprites/hud_background.png');
         game.load.image('bg', 'assets/background.png');
+
+        game.load.image('avatar1', 'assets/sprites/avatars/1.png');
+        game.load.image('avatar2', 'assets/sprites/avatars/2.png');
+        game.load.image('avatar3', 'assets/sprites/avatars/3.png');
+        game.load.image('avatar4', 'assets/sprites/avatars/4.png');
+        game.load.image('avatar5', 'assets/sprites/avatars/5.png');
+
         game.load.spritesheet('startButton', 'assets/spritesheet/startButton.png', 200, 100);
         game.load.spritesheet('quitButton', 'assets/spritesheet/quitButton.png', 125, 100);
         game.load.spritesheet('fullButton', 'assets/spritesheet/fullButton.png', 125, 100);
+        
     },
     create: function() {
         game.state.start('roulletRenderGame');
@@ -993,15 +1038,15 @@ roulletRenderGame.prototype = {
         hud_background.scale.setTo(1, 0.8);
         hud_background.alpha = 0.7;
 
-        pokerchip_100 = game.add.sprite(game.world.centerX-300, game.world.centerY+300, 'blue_100');
+        pokerchip_100 = game.add.sprite(game.world.centerX-450, game.world.centerY+300, 'blue_100');
         pokerchip_100.scale.setTo(0.15, 0.15);
         pokerchip_100.anchor.setTo(0.5,0.5);
 
-        pokerchip_500 = game.add.sprite(game.world.centerX-150, game.world.centerY+300, 'blue_500');
+        pokerchip_500 = game.add.sprite(game.world.centerX-350, game.world.centerY+300, 'blue_500');
         pokerchip_500.scale.setTo(0.15, 0.15);
         pokerchip_500.anchor.setTo(0.5,0.5);
 
-        pokerchip_1000 = game.add.sprite(game.world.centerX, game.world.centerY+300, 'blue_1000');
+        pokerchip_1000 = game.add.sprite(game.world.centerX-250, game.world.centerY+300, 'blue_1000');
         pokerchip_1000.scale.setTo(0.15, 0.15);
         pokerchip_1000.anchor.setTo(0.5,0.5);
 
@@ -1013,96 +1058,136 @@ roulletRenderGame.prototype = {
         chip_select.createSelector();
         selected_chip_value = 100;
 
-        //new POKER_CHIP(game, 'blue', ['0'], 500, false);
+        if(color === "blue"){
+            main_user_avatar = game.add.sprite(main_user_avatar_x, main_user_avatar_y, 'avatar1');
+        }
+        else if(color === "green"){
+            main_user_avatar = game.add.sprite(main_user_avatar_x, main_user_avatar_y, 'avatar2');
+        }
+        else if(color === "grey"){
+            main_user_avatar = game.add.sprite(main_user_avatar_x, main_user_avatar_y, 'avatar3');
+        }
+        else if(color === "purple"){
+            main_user_avatar = game.add.sprite(main_user_avatar_x, main_user_avatar_y, 'avatar4');
+        }
+        else if(color === "red"){
+            main_user_avatar = game.add.sprite(main_user_avatar_x, main_user_avatar_y, 'avatar5');
+        }
+        main_user_avatar.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
+        main_user_avatar.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
+        
+        var style = { font: "30px Arial", fill: "#ffffff", align: "center" };
+        main_user_name = game.add.text(main_user_name_x, main_user_name_y, username, style);
+        main_user_name.anchor.setTo(0.5);
+
+        var se = new SELECTOR(game, '5');
+        se.play();
+
     },
 
     update: function() {
 
-        /* check game input every frame */
-        normal_slots.onChildInputOver.add(function() {
-            normal_input_mode = true;
-        }, this);
-        normal_slots.onChildInputOut.add(function() {
-            normal_input_mode = false;
-        }, this);
+        if(isInputEnable){
 
-        if (normal_input_mode) {
-            pointer.x = game.input.mousePointer.x - 20;
-            pointer.y = game.input.mousePointer.y - 20;
-        } else {
-            pointer.x = 0;
-            pointer.y = 0;
-        }
+            /* check game input every frame */
+            normal_slots.onChildInputOver.add(function() {
+                normal_input_mode = true;
+            }, this);
+            normal_slots.onChildInputOut.add(function() {
+                normal_input_mode = false;
+            }, this);
 
-        normal_slots.forEach(function(item) {
-            if (checkOverlap(item, pointer)) {
-                item.alpha = 0.5
-                if (game.input.activePointer.leftButton.isDown) {
-                    if ($.inArray(item.key, bet_input) === -1) {
-                        bet_input.push(item.key);
+            if (normal_input_mode) {
+                pointer.x = game.input.mousePointer.x - 20;
+                pointer.y = game.input.mousePointer.y - 20;
+            } else {
+                pointer.x = 0;
+                pointer.y = 0;
+            }
+
+            normal_slots.forEach(function(item) {
+                if (checkOverlap(item, pointer)) {
+                    item.alpha = 0.5
+                    if (game.input.activePointer.leftButton.isDown) {
+                        if ($.inArray(item.key, bet_input) === -1) {
+                            bet_input.push(item.key);
+                        }
                     }
+                    if (game.input.activePointer.leftButton.isUp && bet_input.length > 0) {
+                        if (place_bet(bet_input)) {
+                            bet_input = [];
+                        }
+                    }
+                } else {
+                    item.alpha = 1;
                 }
-                if (game.input.activePointer.leftButton.isUp && bet_input.length > 0) {
-                    if (place_bet(bet_input)) {
+            });
+
+            special_slots.onChildInputOver.add(function (sprite) {
+                sprite.alpha = 0.5;
+            }, this);
+            special_slots.onChildInputOut.add(function (sprite) {
+                sprite.alpha = 1;
+            }, this);
+            special_slots.onChildInputDown.add(function (sprite) {
+                if(bet_limiter){
+                    bet_limiter = false;
+                    bet_input = [];
+                    bet_input.push(sprite.key);
+                    if(place_bet(bet_input)){
                         bet_input = [];
                     }
                 }
-            } else {
-                item.alpha = 1;
-            }
-        });
+            }, this);
+            special_slots.onChildInputUp.add(function (sprite) {
+                bet_limiter = true;
+            }, this);
 
-        special_slots.onChildInputOver.add(function (sprite) {
-            sprite.alpha = 0.5;
-        }, this);
-        special_slots.onChildInputOut.add(function (sprite) {
-            sprite.alpha = 1;
-        }, this);
-        special_slots.onChildInputDown.add(function (sprite) {
-            if(bet_limiter){
-                bet_limiter = false;
-                bet_input = [];
-                bet_input.push(sprite.key);
-                if(place_bet(bet_input)){
-                    bet_input = [];
+            /* poker chip input */
+            input_poker_chip_group.onChildInputOver.add(function (sprite) {
+                sprite.alpha = 0.5;
+            }, this);
+            input_poker_chip_group.onChildInputOut.add(function (sprite) {
+                sprite.alpha = 1;
+            }, this);
+            input_poker_chip_group.onChildInputDown.add(function (sprite){
+                var chip = sprite.key;
+                var chip_value = null;
+                if(chip === 'blue_100'){
+                    chip_value = 100;
                 }
-            }
-        }, this);
-        special_slots.onChildInputUp.add(function (sprite) {
-            bet_limiter = true;
-        }, this);
+                else if(chip === 'blue_500'){
+                    chip_value = 500;
+                }
+                else if(chip === 'blue_1000'){
+                    chip_value = 1000;
+                }
+                if(selected_chip_value !== null){
+                    chip_select.removeSelector();
+                }
+                chip_select = new CHIP_SELECTOR(game, chip_value);
+                chip_select.createSelector();
+                selected_chip_value = chip_value;
+            }, this);
 
-        /* poker chip input */
-        input_poker_chip_group.onChildInputOver.add(function (sprite) {
-            sprite.alpha = 0.5;
-        }, this);
-        input_poker_chip_group.onChildInputOut.add(function (sprite) {
-            sprite.alpha = 1;
-        }, this);
-        input_poker_chip_group.onChildInputDown.add(function (sprite){
-            var chip = sprite.key;
-            var chip_value = null;
-            if(chip === 'blue_100'){
-                chip_value = 100;
-            }
-            else if(chip === 'blue_500'){
-                chip_value = 500;
-            }
-            else if(chip === 'blue_1000'){
-                chip_value = 1000;
-            }
-            if(selected_chip_value !== null){
-                chip_select.removeSelector();
-            }
-            chip_select = new CHIP_SELECTOR(game, chip_value);
-            chip_select.createSelector();
-            selected_chip_value = chip_value;
-        }, this);
+        }
+        /* check for timout */
+
+        isTimout = isTimoutTrue(lobbyid);
+        if(isTimout){
+            isInputEnable = false; 
+            // get json object from server // {"lobbyid" : 3, "random_number" : 5}
+            // get other player bets
+            // redraw bets
+            // new selector (with random_number)
+            // onAnimationComplete call function roundOver();
+            // wait for new round signal
+        }
 
     },
 
     render: function() {
-        game.debug.inputInfo(32, 32);
+        //game.debug.inputInfo(32, 32);
     }
 };
 
@@ -1115,6 +1200,8 @@ game.state.start('bootState');
 
 
 /*
+    {plyaerid:"", lobbyid:"", cashbalance:""}
+    {plyaerid:"", lobbyid:"", cashbalance:""}
     //bootState
 
     //GET gameid, playerid
