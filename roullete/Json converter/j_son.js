@@ -1,7 +1,7 @@
 /*JSON FORMAT                                                   array of bet objects
     [                                     
 		{username:"mit17k",th:0,fi:0,hu:6,slots:[1,2,3,4]},		username must with each bet objects
-		{username:"mit17k",th:0,fi:0,hu:6,slots:["1st in 12"]}
+		{username:"mit17k",th:0,fi:0,hu:6,slots:["1stin12"]}
 	]
 */
 
@@ -11,7 +11,7 @@ var username="mit17k";
 // end required Global variables
 
 
-function Bet(th/*1000coin*/,fi/*500coin*/,hu/*100coin*/,slots){  //constructor for a bet
+function Bet(username,th/*1000coin*/,fi/*500coin*/,hu/*100coin*/,slots){  //constructor for a bet
 	this.username=username;
 	this.th=th;
 	this.fi=fi;
@@ -56,14 +56,14 @@ function confirmBet(){  // converts js objects to JSON for transmission
 
 //example usage below
 var slots=[1,2,3,4];
-placeBet(new Bet(0,0,3,slots));
+placeBet(new Bet("mit17k",0,0,3,slots));
 //console.log(confirmBet("sidwa"));
-placeBet(new Bet(0,0,3,slots));
+placeBet(new Bet("mit17k",0,0,3,slots));
 //console.log(confirmBet("sidwa"));
 slots=[2,4,5,8];
-placeBet(new Bet(0,0,3,slots));
+placeBet(new Bet("mit17k",0,0,3,slots));
 //console.log(confirmBet("sidwa"));
-placeBet(new Bet(1,2,3,slots));
+placeBet(new Bet("mit17k",1,2,3,slots));
 console.log(confirmBet());
 //comment it or delete it 
 var js=JSON.parse(confirmBet());
