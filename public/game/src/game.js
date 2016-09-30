@@ -752,15 +752,15 @@ function place_bet(bet_input){
     return true;
 }
 
-function isTimoutTrue (lobbyid){
-    var number = MATH.random();
-    if(number % 2 === 0){
-        return true;
-    }
-    else{
-        return false;
-    }
-}
+// function isTimoutTrue (lobbyid){
+//     var number = MATH.random();
+//     if(number % 2 === 0){
+//         return true;
+//     }
+//     else{
+//         return false;
+//     }
+// }
 
 var roulletPreloadGame = function() {
     console.log("Loading roullet game");
@@ -1173,16 +1173,16 @@ roulletRenderGame.prototype = {
         }
         /* check for timout */
 
-        isTimout = isTimoutTrue(lobbyid);
-        if(isTimout){
-            isInputEnable = false; 
-            // get json object from server // {"lobbyid" : 3, "random_number" : 5}
-            // get other player bets
-            // redraw bets
-            // new selector (with random_number)
-            // onAnimationComplete call function roundOver();
-            // wait for new round signal
-        }
+        // isTimout = isTimoutTrue(lobbyid);
+        // if(isTimout){
+        //     isInputEnable = false; 
+        //     // get json object from server // {"lobbyid" : 3, "random_number" : 5}
+        //     // get other player bets
+        //     // redraw bets
+        //     // new selector (with random_number)
+        //     // onAnimationComplete call function roundOver();
+        //     // wait for new round signal
+        // }
 
     },
 
