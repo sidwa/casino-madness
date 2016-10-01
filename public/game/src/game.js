@@ -41,7 +41,7 @@ function goFull() {
 }
 
 function quit() {
-    alert('Fcking Noob!');
+    alert('Game Over');
 }
 
 var bootState = function() {
@@ -53,7 +53,7 @@ bootState.prototype = {
         game.load.image('loading', 'assets/sprites/loading.png');
     },
     create: function() {
-        game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+        game.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;
         game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
         game.time.desiredFps = 60;
         game.input.mouse.capture = true;
@@ -151,9 +151,14 @@ var number_block_4_resolution_y = 92;
 /* buttons */
 var quitButton;
 var fullButton;
+var removebets;
 
 var fullButton_scale = 0.3;
 var quitButton_scale = 0.3;
+var removebets_scale = 0.4;
+
+var removebets_x = (1366/2)-490;
+var removebets_y = (768/2)+325;
 
 /* sprite groups */
 var normal_slots;
@@ -175,8 +180,16 @@ var main_user_avatar_anchor_x = 0.5;
 var main_user_avatar_anchor_y = 0.5;
 
 var main_user_name;
-var main_user_name_x = (1366/2)-600;
-var main_user_name_y = (768/2)+350;
+var main_user_name_x = (1366/2)-660;
+var main_user_name_y = (768/2)+320;
+
+var credit_balance;
+var credit_balance_x = (1366/2)-490;
+var credit_balance_y = (768/2)+240;
+
+var current_bets_credits;
+var current_bets_credits_x = (1366/2)-490;
+var current_bets_credits_y = (768/2)+280;
 
 /* input */
 var selected_chip_value = null;
@@ -194,6 +207,8 @@ var chip_group = [];
 /* game mechanics */
 var isTimout = false;
 var isInputEnable = true;
+var current_bets_value = 0;
+var nullBets = 0;
 
 SELECTOR = function (game, slot_number) {
 
@@ -505,15 +520,15 @@ CHIP_SELECTOR.prototype.createSelector = function (){
     this.chip_selector_y = 0;
 
     if(this.chip_value === 100){
-        this.chip_selector_x = game.world.centerX-450;
+        this.chip_selector_x = game.world.centerX-175;
         this.chip_selector_y = game.world.centerY+300;
     }
     else if(this.chip_value === 500){
-        this.chip_selector_x = game.world.centerX-350;
+        this.chip_selector_x = game.world.centerX-75;
         this.chip_selector_y = game.world.centerY+300;
     }
     else if(this.chip_value === 1000){
-        this.chip_selector_x = game.world.centerX-250;
+        this.chip_selector_x = game.world.centerX+25;
         this.chip_selector_y = game.world.centerY+300;
     }
     else{
@@ -573,14 +588,25 @@ function randomIntFromInterval(min,max){
     return Math.floor(Math.random()*(max-min+1)+min);
 }
 
-function drawBets(bets,color){
+function updatePlacedBets(){
+
+    for(var i = 0; i < final_bets_json_object.length; i++){
+        final_bets_json_object[i].placed[0] = final_bets_json_object[i].th;
+        final_bets_json_object[i].placed[1] = final_bets_json_object[i].fi;
+        final_bets_json_object[i].placed[2] = final_bets_json_object[i].hu;
+    }
+    final_bet_json_string = JSON.stringify(final_bets_json_object);
+}
+
+function drawBets(bets,color,other){
     this.bets = bets;
     this.color = color;
+    this.other = other;
     var json_array = JSON.parse(this.bets);
     var j = 1;
+    var placed_bets = [];
+    var initializer = 0;
 
-    destroyBets();
-    
     if(json_array.length > 0){
         for(var i = 0 ; i < json_array.length ; i++){
             this.th = json_array[i].th;
@@ -588,39 +614,82 @@ function drawBets(bets,color){
             this.hu = json_array[i].hu;
             this.slot = json_array[i].slot;
             this.chip_color = json_array[i].color;
-            // bets_placed 
+            this.placed_th = json_array[i].placed[0];
+            this.placed_fi = json_array[i].placed[1];
+            this.placed_hu = json_array[i].placed[2];
 
             if(this.th > 0){
-                for(j = 1; j <= this.th; j++){
-                    if(j === 1){
-                        chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 1000, false));
-                    }
-                    else{
-                        chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 1000, true));
+                if(!this.other){
+                    for(j = this.placed_th; j < this.th; j++){
+                        if(j === 0){
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 1000, false));
+                        }
+                        else{
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 1000, true));                    
+                        }
                     }
                 }
+                else{
+                    for(j = 0; j < this.th; j++){
+                        if(j === 0){
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 1000, false));
+                        }
+                        else{
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 1000, true));                    
+                        }
+                    }
+                }
+                
             }
             if(this.fi > 0){
-                for(j = 1; j <= this.fi; j++){
-                    if(j === 1){
-                        chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 500, false));
-                    }
-                    else{
-                        chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 500, true));
+                if(!this.other){
+                    for(j = this.placed_fi; j < this.fi; j++){
+                        if(j === 0){
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 500, false));
+                        }
+                        else{
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 500, true));
+                        }
                     }
                 }
+                else{
+                    for(j = 1; j < this.fi; j++){
+                        if(j === 0){
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 500, false));
+                        }
+                        else{
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 500, true));
+                        }
+                    }
+                }
+                
             }
             if(this.hu > 0){
-                for(j = 1; j <= this.hu; j++){
-                    
-                    if(j === 1){
-                        chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 100, false));
-                    }
-                    else{
-                        chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 100, true));
+                if(!this.other){
+                    for(j = this.placed_hu; j < this.hu; j++){
+                        if(j === 0){
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 100, false));
+                        }
+                        else{
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 100, true));
+                        }
                     }
                 }
+                else{
+                    for(j = 1; j < this.hu; j++){
+                        if(j === 0){
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 100, false));
+                        }
+                        else{
+                            chip_group.push(new POKER_CHIP(game, this.chip_color, this.slot, 100, true));
+                        }
+                    }
+                }
+                
             }
+        }
+        if(!this.other){
+            updatePlacedBets();
         }
     }
     else{
@@ -638,6 +707,7 @@ function destroyBets(){
 function place_bet(bet_input){
     var uid = username;
     var chip_value = selected_chip_value;
+    current_bets_value += chip_value;
     var final_bet_array = [];
     var th = 0;
     var fi = 0;
@@ -706,10 +776,11 @@ function place_bet(bet_input){
             }
         }
     }
+
     if(final_bet_array.length > 4){
         console.log('BET ARRAY SIZE ERROR');
     }
-    /* JSON FORMAT: {username:"mit17k",th:0,fi:0,hu:6,slots:[1,2,3,4]}*/
+
     if(final_bets_json_object.length > 0){
         for(var j = 0 ; j < final_bets_json_object.length ; j++){
             if(compareArrayEquality(final_bets_json_object[j].slot, final_bet_array)){
@@ -729,7 +800,7 @@ function place_bet(bet_input){
         else if (chip_value === 1000){
             th = 1;
         }
-        var temp_json = {"username": uid, "th":th, "fi":fi, "hu":hu, "slot": final_bet_array, "color": color};
+        var temp_json = {"username": uid, "th":th, "fi":fi, "hu":hu, "slot": final_bet_array, "color": color, "placed":[0,0,0]};
         final_bets_json_object.push(temp_json);
     }
     if (isBetPresent) {
@@ -747,20 +818,14 @@ function place_bet(bet_input){
         }
     }
     final_bet_json_string = JSON.stringify(final_bets_json_object);
-    console.log(final_bet_json_string);
-    drawBets(final_bet_json_string, 'blue');
+    drawBets(final_bet_json_string, 'blue', false);
     return true;
 }
 
-// function isTimoutTrue (lobbyid){
-//     var number = MATH.random();
-//     if(number % 2 === 0){
-//         return true;
-//     }
-//     else{
-//         return false;
-//     }
-// }
+function removeAllBets(){
+    destroyBets();
+    current_bets_value = 0;
+}
 
 var roulletPreloadGame = function() {
     console.log("Loading roullet game");
@@ -865,7 +930,11 @@ roulletPreloadGame.prototype = {
         game.load.spritesheet('startButton', 'assets/spritesheet/startButton.png', 200, 100);
         game.load.spritesheet('quitButton', 'assets/spritesheet/quitButton.png', 125, 100);
         game.load.spritesheet('fullButton', 'assets/spritesheet/fullButton.png', 125, 100);
+        game.load.spritesheet('removebets', 'assets/spritesheet/removebets.png', 300, 100);
         
+        game.load.bitmapFont('blackrose', 'assets/bitmapFonts/blackrose/blackrose.png', 'assets/bitmapFonts/blackrose/blackrose.fnt');
+        
+
     },
     create: function() {
         game.state.start('roulletRenderGame');
@@ -1038,15 +1107,15 @@ roulletRenderGame.prototype = {
         hud_background.scale.setTo(1, 0.8);
         hud_background.alpha = 0.7;
 
-        pokerchip_100 = game.add.sprite(game.world.centerX-450, game.world.centerY+300, 'blue_100');
+        pokerchip_100 = game.add.sprite(game.world.centerX-175, game.world.centerY+300, 'blue_100');
         pokerchip_100.scale.setTo(0.15, 0.15);
         pokerchip_100.anchor.setTo(0.5,0.5);
 
-        pokerchip_500 = game.add.sprite(game.world.centerX-350, game.world.centerY+300, 'blue_500');
+        pokerchip_500 = game.add.sprite(game.world.centerX-75, game.world.centerY+300, 'blue_500');
         pokerchip_500.scale.setTo(0.15, 0.15);
         pokerchip_500.anchor.setTo(0.5,0.5);
 
-        pokerchip_1000 = game.add.sprite(game.world.centerX-250, game.world.centerY+300, 'blue_1000');
+        pokerchip_1000 = game.add.sprite(game.world.centerX+25, game.world.centerY+300, 'blue_1000');
         pokerchip_1000.scale.setTo(0.15, 0.15);
         pokerchip_1000.anchor.setTo(0.5,0.5);
 
@@ -1073,116 +1142,139 @@ roulletRenderGame.prototype = {
         else if(color === "red"){
             main_user_avatar = game.add.sprite(main_user_avatar_x, main_user_avatar_y, 'avatar5');
         }
+
         main_user_avatar.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
         main_user_avatar.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
         
-        var style = { font: "30px Arial", fill: "#ffffff", align: "center" };
-        main_user_name = game.add.text(main_user_name_x, main_user_name_y, username, style);
-        main_user_name.anchor.setTo(0.5);
+        main_user_name = game.add.bitmapText(main_user_name_x, main_user_name_y, 'blackrose', username, 50);
+        
+        credit_balance = game.add.bitmapText(credit_balance_x, credit_balance_y, 'blackrose', 'Balance:'+cashbalance, 40);
+        current_bets_credits = game.add.bitmapText(current_bets_credits_x, current_bets_credits_y, 'blackrose', 'Bets:'+current_bets_value, 40);
+        
+        removebets = game.add.button(removebets_x, removebets_y, 'removebets', removeAllBets, this, 2, 1, 0);
+        removebets.scale.setTo(removebets_scale, removebets_scale);
 
-        var se = new SELECTOR(game, '5');
-        se.play();
+        /* temp */
+        var temp1 = game.add.sprite(main_user_avatar_x+750, main_user_avatar_y, 'avatar2');
+        temp1.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
+        temp1.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
+
+        var temp1_text1 = game.add.bitmapText(main_user_name_x+770, main_user_name_y, 'blackrose', 'dranzor', 25);
+        var temp1_text2 = game.add.bitmapText(main_user_name_x+770, main_user_name_y+25, 'blackrose', 25000, 25);
+
+        var temp2 = game.add.sprite(main_user_avatar_x+850, main_user_avatar_y, 'avatar3');
+        temp2.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
+        temp2.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
+
+        var temp2_text1 = game.add.bitmapText(main_user_name_x+870, main_user_name_y, 'blackrose', 'sidwa', 25);
+        var temp2_text2 = game.add.bitmapText(main_user_name_x+870, main_user_name_y+25, 'blackrose', 25000, 25);
+
+        var temp3 = game.add.sprite(main_user_avatar_x+950, main_user_avatar_y, 'avatar4');
+        temp3.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
+        temp3.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
+
+        var temp3_text1 = game.add.bitmapText(main_user_name_x+970, main_user_name_y, 'blackrose', 'sidwa', 25);
+        var temp3_text2 = game.add.bitmapText(main_user_name_x+970, main_user_name_y+25, 'blackrose', 25000, 25);
+
+        var temp4 = game.add.sprite(main_user_avatar_x+1050, main_user_avatar_y, 'avatar5');
+        temp4.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
+        temp4.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
+
+        var temp4_text1 = game.add.bitmapText(main_user_name_x+1070, main_user_name_y, 'blackrose', 'sidwa', 25);
+        var temp4_text2 = game.add.bitmapText(main_user_name_x+1070, main_user_name_y+25, 'blackrose', 25000, 25);
 
     },
 
     update: function() {
 
-        if(isInputEnable){
+        /* check game input every frame */
+        normal_slots.onChildInputOver.add(function() {
+            normal_input_mode = true;
+        }, this);
+        normal_slots.onChildInputOut.add(function() {
+            normal_input_mode = false;
+        }, this);
 
-            /* check game input every frame */
-            normal_slots.onChildInputOver.add(function() {
-                normal_input_mode = true;
-            }, this);
-            normal_slots.onChildInputOut.add(function() {
-                normal_input_mode = false;
-            }, this);
+        if (normal_input_mode) {
+            pointer.x = game.input.mousePointer.x - 20;
+            pointer.y = game.input.mousePointer.y - 20;
+        } else {
+            pointer.x = 0;
+            pointer.y = 0;
+        }
 
-            if (normal_input_mode) {
-                pointer.x = game.input.mousePointer.x - 20;
-                pointer.y = game.input.mousePointer.y - 20;
-            } else {
-                pointer.x = 0;
-                pointer.y = 0;
-            }
-
-            normal_slots.forEach(function(item) {
-                if (checkOverlap(item, pointer)) {
-                    item.alpha = 0.5
-                    if (game.input.activePointer.leftButton.isDown) {
+        normal_slots.forEach(function(item) {
+            if (checkOverlap(item, pointer)) {
+                item.alpha = 0.5
+                if (game.input.activePointer.leftButton.isDown) {
+                    if(selected_chip_value + current_bets_value <= cashbalance){
                         if ($.inArray(item.key, bet_input) === -1) {
-                            bet_input.push(item.key);
+                            bet_input.push(item.key); 
                         }
                     }
-                    if (game.input.activePointer.leftButton.isUp && bet_input.length > 0) {
-                        if (place_bet(bet_input)) {
-                            bet_input = [];
-                        }
-                    }
-                } else {
-                    item.alpha = 1;
                 }
-            });
-
-            special_slots.onChildInputOver.add(function (sprite) {
-                sprite.alpha = 0.5;
-            }, this);
-            special_slots.onChildInputOut.add(function (sprite) {
-                sprite.alpha = 1;
-            }, this);
-            special_slots.onChildInputDown.add(function (sprite) {
-                if(bet_limiter){
-                    bet_limiter = false;
-                    bet_input = [];
-                    bet_input.push(sprite.key);
-                    if(place_bet(bet_input)){
+                if (game.input.activePointer.leftButton.isUp && bet_input.length > 0) {
+                    if (place_bet(bet_input)) {
                         bet_input = [];
                     }
                 }
-            }, this);
-            special_slots.onChildInputUp.add(function (sprite) {
-                bet_limiter = true;
-            }, this);
+                if(!isInputEnable){
+                    bet_input = [];
+                }
+            } else {
+                item.alpha = 1;
+            }
+        });
 
-            /* poker chip input */
-            input_poker_chip_group.onChildInputOver.add(function (sprite) {
-                sprite.alpha = 0.5;
-            }, this);
-            input_poker_chip_group.onChildInputOut.add(function (sprite) {
-                sprite.alpha = 1;
-            }, this);
-            input_poker_chip_group.onChildInputDown.add(function (sprite){
-                var chip = sprite.key;
-                var chip_value = null;
-                if(chip === 'blue_100'){
-                    chip_value = 100;
+        special_slots.onChildInputOver.add(function (sprite) {
+            sprite.alpha = 0.5;
+        }, this);
+        special_slots.onChildInputOut.add(function (sprite) {
+            sprite.alpha = 1;
+        }, this);
+        special_slots.onChildInputDown.add(function (sprite) {
+            if(bet_limiter && (selected_chip_value + current_bets_value <= cashbalance)){
+                bet_limiter = false;
+                bet_input = [];
+                bet_input.push(sprite.key);
+                if(place_bet(bet_input)){
+                    bet_input = [];
                 }
-                else if(chip === 'blue_500'){
-                    chip_value = 500;
-                }
-                else if(chip === 'blue_1000'){
-                    chip_value = 1000;
-                }
-                if(selected_chip_value !== null){
-                    chip_select.removeSelector();
-                }
-                chip_select = new CHIP_SELECTOR(game, chip_value);
-                chip_select.createSelector();
-                selected_chip_value = chip_value;
-            }, this);
+            }
+        }, this);
+        special_slots.onChildInputUp.add(function (sprite) {
+            bet_limiter = true;
+        }, this);
 
-        }
-        /* check for timout */
-
-        // isTimout = isTimoutTrue(lobbyid);
-        // if(isTimout){
-        //     isInputEnable = false; 
-        //     // get json object from server // {"lobbyid" : 3, "random_number" : 5}
-        //     // get other player bets
-        //     // redraw bets
-        //     // new selector (with random_number)
-        //     // onAnimationComplete call function roundOver();
-        //     // wait for new round signal
-        // }
+        /* poker chip input */
+        input_poker_chip_group.onChildInputOver.add(function (sprite) {
+            sprite.alpha = 0.5;
+        }, this);
+        input_poker_chip_group.onChildInputOut.add(function (sprite) {
+            sprite.alpha = 1;
+        }, this);
+        input_poker_chip_group.onChildInputDown.add(function (sprite){
+            var chip = sprite.key;
+            var chip_value = null;
+            if(chip === 'blue_100'){
+                chip_value = 100;
+            }
+            else if(chip === 'blue_500'){
+                chip_value = 500;
+            }
+            else if(chip === 'blue_1000'){
+                chip_value = 1000;
+            }
+            if(selected_chip_value !== null){
+                chip_select.removeSelector();
+            }
+            chip_select = new CHIP_SELECTOR(game, chip_value);
+            chip_select.createSelector();
+            selected_chip_value = chip_value;
+        }, this);
+        
+        credit_balance.text = 'Balance:'+cashbalance;
+        current_bets_credits.text = 'Bets:'+current_bets_value;
 
     },
 
@@ -1197,43 +1289,3 @@ game.state.add('roulletStartGame', roulletStartGame);
 game.state.add('roulletRenderGame', roulletRenderGame);
 
 game.state.start('bootState');
-
-
-/*
-    {plyaerid:"", lobbyid:"", cashbalance:""}
-    {plyaerid:"", lobbyid:"", cashbalance:""}
-    //bootState
-
-    //GET gameid, playerid
-    var playinfo = function (playerid, gameid){
-        return jsonobject; // playerid, lobbyid, cashbalance
-    }
-
-    // var playerinfo = function (lobbyid){
-        return playerinfo;
-    }
-    // timeout
-    var isRoundOver = function (lobbyid){
-        return false;
-        // timeout return true;
-    }
-    if(isRoundOver){
-        input = false;
-        var number = function getRn(lobbyid , bets){
-            return int;son // playerid , newcashbalance
-        }
-        var other_player_bets = function (lobbyid){
-            return array; // totolbets
-        }
-    }
-
-    // wheel animation start 
-    var isBetSend = function (lobbyid , bets){
-        return true;
-    }
-    (isBetSend && isWheelanimationfinished){
-        function roundover(lobbyid){
-
-        }
-    }
-*/
