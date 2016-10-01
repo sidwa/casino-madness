@@ -7,86 +7,57 @@ function getBets(){
 	}
 	if(ajx.readyState==4 || ajx.readyState==0){
 		ajx.open("GET","localhost:800/getBets",true);
-		ajx.onreadystatechange=function(){
-            var response;
-            if(ajx.readyState==4 && ajx.status==200){
-                //response=JSON.parse(this.responseText);
-                response=this.responseText;
-                //do whatever you want with response`
-            }
-        };
 		ajx.send();
+		var response;
+		//response=JSON.parse(this.responseText);
+		response=this.responseText;
+		//do whatever you want with response`
+		return response;
 	}
 }
 
 function getPlayers(){
-            ajx=new XMLHttpRequest();
-            if(!ajx){
-                alert("Internet explorer not supported by this site!!!");
-                return;
-            }
-            if(ajx.readyState==4 || ajx.readyState==0){
-                ajx.open("GET","localhost:800/getPlayers",true);
-                ajx.onreadystatechange=function(){
-                    var response;
-                    if(ajx.readyState==4 && ajx.status==200){
-                        //response=JSON.parse(this.responseText);
-                        response=this.responseText;
-                        if(!response) response="[]";
-                        console.log(response);
-                        document.getElementById("out").innerHTML=response;
-                        //do whatever you want with response`
-                    }
-                };
-                ajx.send();
-            }
+			ajx=new XMLHttpRequest();
+			if(!ajx){
+				alert("Internet explorer not supported by this site!!!");
+				return;
+			}
+			ajx.open("GET","localhost:800/getPlayers",true);
+			ajx.send();
+			var response;
+			//response=JSON.parse(this.responseText);
+			response=ajx.responseText;
+			return response;
+			//do whatever you want with response
 }
 
 function payout(){
-            ajx=new XMLHttpRequest();
-            if(!ajx){
-                alert("Internet explorer not supported by this site!!!");
-                return;
-            }
-            if(ajx.readyState==4 || ajx.readyState==0){
-                ajx.open("GET","localhost:800/payout",true);
-                ajx.onreadystatechange=function(){
-                    var response;
-                    if(ajx.readyState==4 && ajx.status==200){
-                        //response=JSON.parse(this.responseText);
-                        response=this.responseText;
-                        if(!response) response="[]";
-                        console.log(response);
-                        document.getElementById("out").innerHTML=response;
-                        //do whatever you want with response`
-                    }
-                };
-                ajx.send();
-            }
+			ajx=new XMLHttpRequest();
+			if(!ajx){
+				alert("Internet explorer not supported by this site!!!");
+				return;
+			}
+			ajx.open("GET","localhost:800/payout",false);
+			ajx.send();
+			var response;
+			//response=JSON.parse(this.responseText);
+			response=ajx.responseText;
+			return response;
+			//do whatever you want with response`
 } 
 
   function timer(){
-            ajx=new XMLHttpRequest();
-            if(!ajx){
-                alert("Internet explorer not supported by this site!!!");
-                return;
-            }
-            if(ajx.readyState==4 || ajx.readyState==0){
-                ajx.open("GET","localhost:800/timer",true);
-                ajx.onreadystatechange=function(){
-                    var response;
-                    if(ajx.readyState==4 && ajx.status==200){
-                        //response=JSON.parse(this.responseText);
-                        response=this.responseText;
-                        if(!response) response="[]";
-                        console.log(response);
-                        document.getElementById("out").innerHTML=response;
-                        var num=parseInt(response,10);
-                        var year=Math.floor(num/(60*60*24*365));
-                        document.getElementById("out").innerHTML+="<br>years:"+year+"<br>"+Date.now();
-                        //do whatever you want with response`
-                    }
-                };
-                ajx.send();
-            }
-        }
+			ajx=new XMLHttpRequest();
+			if(!ajx){
+				alert("Internet explorer not supported by this site!!!");
+				return;
+			}
+			ajx.open("GET","http://localhost:800/timer",false);
+			ajx.send();
+			var response;
+			//response=JSON.parse(this.responseText);
+			response=ajx.responseText;
+			var num=parseInt(response,10);
+			return num;
+			//do whatever you want with response`
+}
