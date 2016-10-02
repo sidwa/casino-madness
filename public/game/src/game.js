@@ -15,7 +15,7 @@ $.urlParam = function(name){
 };
 
 function userinfo (userid){
-    var json = {"username": "mit17k", "color":"blue", "cashbalance": 25000, "lobbyid": 3};
+    var json = {"username": "mit17k", "color":"blue", "cashbalance": 25000, "lobbyid": 3, "gameid":3};
 
     return json;
 }
@@ -25,6 +25,7 @@ var user_info = userinfo(username);
 var color = user_info.color;
 var cashbalance = user_info.cashbalance;
 var lobbyid = user_info.lobbyid;
+var gameid = user_info.gameid;
 
 var game = new Phaser.Game(1366, 768, Phaser.CANVAS);
 
@@ -53,11 +54,22 @@ bootState.prototype = {
         game.load.image('loading', 'assets/sprites/loading.png');
     },
     create: function() {
-        game.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;
+        game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
         game.time.desiredFps = 60;
         game.input.mouse.capture = true;
-        game.state.start('roulletPreloadGame');
+        if(gameid === 1){
+            game.state.start('roulletPreloadGame');
+        }
+        else if (gameid === 2){
+            game.state.start('bingoPreloadGame');
+        }
+        else if (gameid === 3){
+            game.state.start('slotsPreloadGame');
+        }
+        else{
+            console.log('Invalid GameID');
+        }
     }
 };
 
@@ -915,8 +927,6 @@ roulletPreloadGame.prototype = {
         game.load.image('red_500', 'assets/sprites/pokerchips/r500.png');
         game.load.image('red_1000', 'assets/sprites/pokerchips/r1000.png');
 
-        game.load.image('pointer', 'assets/sprites/pointer.png');
-
         game.load.image('chip_selector', 'assets/sprites/chip_selector.png');
         game.load.image('hud_background', 'assets/sprites/hud_background.png');
         game.load.image('bg', 'assets/background.png');
@@ -937,7 +947,7 @@ roulletPreloadGame.prototype = {
 
     },
     create: function() {
-        game.state.start('roulletRenderGame');
+        game.state.start('roulletStartGame');
     }
 };
 
@@ -1283,9 +1293,698 @@ roulletRenderGame.prototype = {
     }
 };
 
+function startBingo(){
+    goFull();
+    game.state.start('bingoRenderGame');
+}
+
+var bingotitle_button;
+var bingotitle_x = (1366/2);
+var bingotitle_y = (768/2)-300;
+var bingotitle_scale = 0.6;
+var bingotitle_anchor_x = 0.5;
+var bingotitle_anchor_y = 0.5;
+
+var gridframe;
+var gridframe_x = (1366/2)+383;
+var gridframe_y = (768/2)+50;
+var gridframe_scale = 0.7;
+var gridframe_anchor_x = 0.5;
+var gridframe_anchor_y = 0.5;
+
+var gridlines;
+var gridlines_x = (1366/2)+383;
+var gridlines_y = (768/2)+50;
+var gridlines_scale = 0.7;
+var gridlines_anchor_x = 0.5;
+var gridlines_anchor_y = 0.5;
+
+var number_initial_x = (1366/2)+175;
+var number_initial_y = (768/2)-150;
+
+var bingo_card_number_group;
+var bingo_numbers_history = [];
+var bingo_numbers_hist_grp;
+var bingo_hist_bg_group;
+var strike_grp = [];
+var bingo_marked_index = [];
+
+var current_bingo_number_index = 0;
+var test_counter = 0;
+var glow_current_status = 0;
+var current_placement_index = true;
+var btn_glow = 0;
+
+STRIKE = function (game, index){
+    this.game = game;
+    this.index = index;
+
+    var strike_x = bingo_card_number_group.children[this.index].x;
+    var strike_y = bingo_card_number_group.children[this.index].y;
+
+    var strike = this.game.add.sprite(strike_x , strike_y, 'strike');
+    strike.scale.setTo(0.5, 0.5);
+    strike.anchor.setTo(0.5, 0.5);
+};
+
+function isInArray (num , array) {
+    this.num = num;
+    this.array = array;
+
+    var isFound = false;
+    for(var i = 0; i < this.array.length ; i++){
+        if(this.array[i] === this.num){
+            isFound = true;
+            break;
+        }
+    }
+    return isFound;
+}
+
+function isHistoryNumberPresent() {
+    if(bingo_hist_bg_group.length > 0 && bingo_numbers_hist_grp.length > 0){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+function drawHistoryNumbers (){
+
+    var drawPartial = true;
+    var counter = 0;
+
+    if(!drawPartial){
+        for(var i = 0; i < 5 ; i++){
+            for(var j = 0; j < 10 ; j++){
+                var hist_num = game.add.sprite(((78/2)+10)*(j+1) + (27.5*j), 200+(100*i), 'numbersstack');
+                hist_num.scale.setTo(1, 1);
+                hist_num.anchor.setTo(0.5, 0.5);
+                bingo_hist_bg_group.add(hist_num);
+
+                var hist_num_text = game.add.bitmapText(((78/2)+8)*(j+1) + (29.5*j), 200+(100*i), 'blackrosegreen',  bingo_numbers_history[counter], 34);
+                hist_num_text.anchor.setTo(0.5 , 0.5);
+                bingo_numbers_hist_grp.add(hist_num_text);
+
+                counter++;
+            }
+        }
+    }
+    else{
+        for(var i = 0; i < 5 ; i++){
+            for(var j = 0; j < 10 ; j++){
+                if(counter === current_bingo_number_index){
+                    var hist_num = game.add.sprite(((78/2)+10)*(j+1) + (27.5*j), 200+(100*i), 'numbersstack');
+                    hist_num.scale.setTo(1, 1);
+                    hist_num.anchor.setTo(0.5, 0.5);
+                    bingo_hist_bg_group.add(hist_num);
+
+                    var hist_num_text = game.add.bitmapText(((78/2)+8)*(j+1) + (29.5*j), 200+(100*i), 'blackrosegreen',  bingo_numbers_history[counter], 34);
+                    hist_num_text.anchor.setTo(0.5 , 0.5);
+                    bingo_numbers_hist_grp.add(hist_num_text);
+
+                }
+                counter++;
+            }
+        }
+    }
+}
+
+function generateBingoSheetNumbers (){
+    var i = 0;
+    var bingo_numbers_array = [];
+    while(i < 50){
+        var random = randomIntFromInterval(1 , 100);
+        if(!isInArray(random , bingo_numbers_array)){
+            bingo_numbers_array.push(random);
+            i++;
+        }
+    }
+    return bingo_numbers_array;
+}
+
+function generateBingoSheet (){
+    
+    var bingo_numbers_array = generateBingoSheetNumbers();
+    var counter = 0;
+    for(var i = 0 ; i < 5 ; i++){
+        for(var j = 0 ; j < 5 ; j++){
+            var bingonumber = game.add.bitmapText(number_initial_x + (140 * 0.55 * j) + (13.5 * j * 2) , number_initial_y + (140 * 0.55 * i) + (13.5 * i * 2), 'blackrosegreen', bingo_numbers_array[counter].toString(), 58);
+            bingonumber.anchor.setTo(0.5, 0.5);
+            bingo_card_number_group.add(bingonumber);
+            counter++;
+        }
+    }
+    
+}
+
+function getIndex(num, group) {
+    this.num = num;
+    var temp_index = -1;
+    for(var i = 0 ; i < bingo_card_number_group.length ; i++){
+        if(bingo_card_number_group.children[i].text === this.num){
+            temp_index = i;
+            break;
+        }
+    }
+    return temp_index;
+}
+
+function isWinCondition (){
+    var won = false;
+    if(bingo_marked_index.length > 5){
+        if(isInArray(0, bingo_marked_index) && isInArray(1, bingo_marked_index) && isInArray(2, bingo_marked_index) && isInArray(3, bingo_marked_index) && isInArray(4, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(5, bingo_marked_index) && isInArray(6, bingo_marked_index) && isInArray(7, bingo_marked_index) && isInArray(8, bingo_marked_index) && isInArray(9, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(10, bingo_marked_index) && isInArray(11, bingo_marked_index) && isInArray(12, bingo_marked_index) && isInArray(13, bingo_marked_index) && isInArray(14, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(15, bingo_marked_index) && isInArray(16, bingo_marked_index) && isInArray(17, bingo_marked_index) && isInArray(18, bingo_marked_index) && isInArray(19, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(20, bingo_marked_index) && isInArray(21, bingo_marked_index) && isInArray(22, bingo_marked_index) && isInArray(23, bingo_marked_index) && isInArray(24, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(0, bingo_marked_index) && isInArray(5, bingo_marked_index) && isInArray(10, bingo_marked_index) && isInArray(15, bingo_marked_index) && isInArray(20, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(1, bingo_marked_index) && isInArray(6, bingo_marked_index) && isInArray(11, bingo_marked_index) && isInArray(16, bingo_marked_index) && isInArray(21, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(2, bingo_marked_index) && isInArray(7, bingo_marked_index) && isInArray(12, bingo_marked_index) && isInArray(17, bingo_marked_index) && isInArray(22, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(3, bingo_marked_index) && isInArray(8, bingo_marked_index) && isInArray(13, bingo_marked_index) && isInArray(18, bingo_marked_index) && isInArray(23, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(4, bingo_marked_index) && isInArray(9, bingo_marked_index) && isInArray(14, bingo_marked_index) && isInArray(19, bingo_marked_index) && isInArray(24, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(0, bingo_marked_index) && isInArray(6, bingo_marked_index) && isInArray(12, bingo_marked_index) && isInArray(18, bingo_marked_index) && isInArray(24, bingo_marked_index)){
+            won = true;
+        }
+        else if(isInArray(4, bingo_marked_index) && isInArray(8, bingo_marked_index) && isInArray(12, bingo_marked_index) && isInArray(16, bingo_marked_index) && isInArray(20, bingo_marked_index)){
+            won = true;
+        }
+    }
+    return won;
+}
+
+/* test purpose */
+function generateHistoryNumbers() {
+    var i = 0;
+    var history_numbers_array = [];
+    while(i < 50){
+        var random = randomIntFromInterval(1 , 100);
+        if(!isInArray(random , history_numbers_array)){
+            history_numbers_array.push(random);
+            i++;
+        }
+    }
+    return history_numbers_array;
+}
+
+function bingoWin(){
+    if(isWinCondition()){
+        alert('wooohooo');
+    }
+    else if (bingo_marked_index.length < 25){
+        alert('complete the game');
+    }
+    else {
+        alert('lost');
+    }
+    
+}
+
+var bingoPreloadGame = function() {
+    console.log("Loading bingo game");
+};
+
+bingoPreloadGame.prototype = {
+    preload: function (){
+        
+        game.load.bitmapFont('blackrosegreen', 'assets/bitmapFonts/blackrosegreen/blackrosegreen.png', 'assets/bitmapFonts/blackrosegreen/blackrosegreen.fnt');
+        
+        game.load.image('bingobg', 'assets/bingobg.png');
+        game.load.image('gridframe', 'assets/sprites/gridframe.png');
+        game.load.image('gridlines', 'assets/sprites/gridlines.png');
+        game.load.image('numbersstack', 'assets/sprites/numbersstack.png');
+        game.load.image('strike', 'assets/sprites/strike.png');
+
+        game.load.spritesheet('startButton', 'assets/spritesheet/startButton.png', 200, 100);
+        game.load.spritesheet('quitButton', 'assets/spritesheet/quitButton.png', 125, 100);
+        game.load.spritesheet('fullButton', 'assets/spritesheet/fullButton.png', 125, 100);
+        game.load.spritesheet('bingobutton', 'assets/spritesheet/bingobutton.png', 400, 210);
+
+    },
+    create: function (){
+        game.state.start('bingoRenderGame');
+    }
+};
+
+
+var bingoStartGame = function() {
+    console.log("Bingo Game start screen");
+};
+
+bingoStartGame.prototype = {
+    create: function () {
+        startButton = game.add.button(game.world.centerX - 95, 550, 'startButton', startBingo, this, 2, 1, 0);
+    }
+};
+
+var bingoRenderGame = function() {
+    console.log("Render bingo game");
+};
+
+bingoRenderGame.prototype = {
+    create: function () {
+        game.add.tileSprite(0, 0, 1366, 768, 'bingobg');
+
+        quitButton = game.add.button(1300, 10, 'quitButton', quit, this, 2, 1, 0);
+        fullButton = game.add.button(1250, 10, 'fullButton', goFull, this, 2, 1, 0);
+
+        quitButton.scale.setTo(quitButton_scale, quitButton_scale);
+        fullButton.scale.setTo(fullButton_scale, fullButton_scale);
+
+        gridframe = game.add.sprite(gridframe_x , gridframe_y , 'gridframe');
+        gridframe.scale.setTo(gridframe_scale, gridframe_scale);
+        gridframe.anchor.setTo(gridframe_anchor_x, gridframe_anchor_y);
+
+        gridlines = game.add.sprite(gridlines_x , gridlines_y , 'gridlines');
+        gridlines.scale.setTo(gridlines_scale, gridlines_scale);
+        gridlines.anchor.setTo(gridlines_anchor_x, gridlines_anchor_y);
+
+        bingo_card_number_group = game.add.group();
+        bingo_hist_bg_group = game.add.group();
+        bingo_numbers_hist_grp = game.add.group();
+
+        bingo_card_number_group.inputEnableChildren = true;
+
+        bingotitle_button = game.add.button(bingotitle_x, bingotitle_y, 'bingobutton', bingoWin, this, 2, 1, 0);
+        bingotitle_button.scale.setTo(bingotitle_scale, bingotitle_scale);
+        bingotitle_button.anchor.setTo(bingotitle_anchor_x, bingotitle_anchor_y);
+
+        generateBingoSheet();
+    },
+
+    update: function () {
+        test_counter++;
+
+        if(test_counter === 60 && current_bingo_number_index < 50){
+            var num_status = true;
+            while (num_status){
+                var temp_num = randomIntFromInterval(1, 100);
+                if(!isInArray(temp_num, bingo_numbers_history)){
+                    bingo_numbers_history.push(temp_num);
+                    num_status = false;
+                }
+            }
+            test_counter = 0;
+        }
+
+        btn_glow++;
+        if(btn_glow < 15){
+            bingotitle_button.alpha = 0;
+        }
+        else{
+            bingotitle_button.alpha = 1;
+        }
+        if(btn_glow === 30){
+            btn_glow = 0;
+        }
+
+        if(isWinCondition()){
+            bingotitle_button.visible = true;
+        }
+
+        if(current_bingo_number_index < bingo_numbers_history.length){
+            drawHistoryNumbers();
+            current_bingo_number_index++;
+        }
+
+        if(current_bingo_number_index > 0){
+            glow_current_status++;
+            if(glow_current_status < 15){
+                bingo_hist_bg_group.children[current_bingo_number_index-1].visible = false;
+            }
+            else{
+                bingo_hist_bg_group.children[current_bingo_number_index-1].visible = true;
+            }
+            if(glow_current_status === 30){
+                glow_current_status = 0;
+            }
+        }
+        
+        bingo_card_number_group.onChildInputOver.add(function (sprite) {
+            sprite.alpha = 0.5;
+        }, this);
+        bingo_card_number_group.onChildInputOut.add(function (sprite) {
+            sprite.alpha = 1;
+        }, this);
+        bingo_card_number_group.onChildInputDown.add(function (sprite) {
+            if(current_placement_index){
+                var text_index = getIndex(sprite.text, bingo_card_number_group);
+                if((!isInArray(text_index, bingo_marked_index)) && (isInArray(parseInt(sprite.text), bingo_numbers_history))){
+                    bingo_marked_index.push(text_index);
+                    strike_grp.push(new STRIKE(game, text_index));
+                    current_placement_index = false;
+                }
+            }
+        }, this);
+        bingo_card_number_group.onChildInputUp.add(function (sprite) {
+            current_placement_index = true;
+        }, this);
+    },
+
+    render: function () {
+        
+    }
+};
+
+var box;
+var box_x = (1366/2);
+var box_y = (768/2);
+var box_scale = 0.7;
+var box_anchor_x = 0.5;
+var box_anchor_y = 0.5;
+
+var bluelight;
+var bluelight_x = (1366/2);
+var bluelight_y = (768/2) - 50;
+var bluelight_scale = 0.7;
+var bluelight_anchor_x = 0.5;
+var bluelight_anchor_y = 0.5;
+
+var slotbox;
+var slotbox_x = (1366/2);
+var slotbox_y = (768/2)-50;
+var slotbox_scale = 0.7;
+var slotbox_anchor_x = 0.5;
+var slotbox_anchor_y = 0.5;
+
+var slotgreen;
+var slotgreen_x = (1366/2);
+var slotgreen_y = (768/2)-50;
+var slotgreen_scale = 0.7;
+var slotgreen_anchor_x = 0.5;
+var slotgreen_anchor_y = 0.5;
+
+var slotgreen_grp;
+
+var slot_image;
+var slot_image_x = (1366/2);
+var slot_image_y = (768/2)-50;
+var slot_image_scale = 0.5;
+var slot_image_anchor_x = 0.5;
+var slot_image_anchor_y = 0.5;
+
+var slot_image_grp1;
+var slot_image_grp2;
+var slot_image_grp3;
+
+var spinbutton;
+var spinbutton_x = (1366/2)+400;
+var spinbutton_y = (768/2);
+var spinbutton_scale = 0.8;
+
+var bluelight_glow = 0;
+var spin_slot = false;
+var playAnimationSlot = false;
+
+var slot1_temp_rn = 1;
+var slot2_temp_rn = 1;
+var slot3_temp_rn = 1;
+
+var slot1_res_rn;
+var slot2_res_rn
+var slot3_res_rn
+
+var counter_slot1 = 0;
+var counter_slot2 = 0;
+var counter_slot3 = 0;
+
+var animation_counter = 0;
+
+function startSlots(){
+    goFull();
+    game.state.start('slotsRenderGame');
+}
+
+function spinSlots(){
+    spin_slot = true;
+}
+
+var slotsPreloadGame = function() {
+    console.log("Loading bingo game");
+};
+
+slotsPreloadGame.prototype = {
+    preload: function (){
+        game.load.spritesheet('startButton', 'assets/spritesheet/startButton.png', 200, 100);
+        
+        game.load.image('bingobg', 'assets/slotbg.png');
+        game.load.image('box', 'assets/sprites/box.png');
+        game.load.image('bluelight', 'assets/sprites/bluelight.png');
+        game.load.image('slotbox', 'assets/sprites/slotbox.png');
+        game.load.image('slotgreen', 'assets/sprites/slotgreen.png');
+
+        game.load.image('apple', 'assets/sprites/items/apple.png');
+        game.load.image('cherry', 'assets/sprites/items/cherry.png');
+        game.load.image('orange', 'assets/sprites/items/orange.png');
+        game.load.image('seven', 'assets/sprites/items/seven.png');
+        game.load.image('strawberry', 'assets/sprites/items/strawberry.png');
+        game.load.image('watermelon', 'assets/sprites/items/watermelon.png');
+
+        game.load.spritesheet('quitButton', 'assets/spritesheet/quitButton.png', 125, 100);
+        game.load.spritesheet('fullButton', 'assets/spritesheet/fullButton.png', 125, 100);
+        game.load.spritesheet('spinbutton', 'assets/spritesheet/spinbutton.png', 250, 130);
+
+    },
+    create: function (){
+        game.state.start('slotsRenderGame');
+    }
+};
+
+
+var slotsStartGame = function() {
+    console.log("Bingo Game start screen");
+};
+
+slotsStartGame.prototype = {
+    create: function () {
+        startButton = game.add.button(game.world.centerX - 95, 550, 'startButton', startSlots, this, 2, 1, 0);
+    }
+};
+
+var slotsRenderGame = function() {
+    console.log("Render slots game");
+};
+
+slotsRenderGame.prototype = {
+    create: function () {
+        
+        game.add.tileSprite(0, 0, 1366, 768, 'bingobg');
+
+        quitButton = game.add.button(1300, 10, 'quitButton', quit, this, 2, 1, 0);
+        fullButton = game.add.button(1250, 10, 'fullButton', goFull, this, 2, 1, 0);
+
+        quitButton.scale.setTo(quitButton_scale, quitButton_scale);
+        fullButton.scale.setTo(fullButton_scale, fullButton_scale);
+
+        box = game.add.sprite(box_x , box_y, 'box');
+        box.scale.setTo(box_scale, box_scale);
+        box.anchor.setTo(box_anchor_x, box_anchor_y);
+
+        bluelight = game.add.sprite(bluelight_x , bluelight_y, 'bluelight');
+        bluelight.scale.setTo(bluelight_scale, bluelight_scale);
+        bluelight.anchor.setTo(bluelight_anchor_x, bluelight_anchor_y);
+
+        slotbox = game.add.sprite(slotbox_x-210, slotbox_y, 'slotbox');
+        slotbox.scale.setTo(slotbox_scale, slotbox_scale);
+        slotbox.anchor.setTo(slotbox_anchor_x, slotbox_anchor_y);
+
+        slotbox = game.add.sprite(slotbox_x, slotbox_y, 'slotbox');
+        slotbox.scale.setTo(slotbox_scale, slotbox_scale);
+        slotbox.anchor.setTo(slotbox_anchor_x, slotbox_anchor_y);
+
+        slotbox = game.add.sprite(slotbox_x+210, slotbox_y, 'slotbox');
+        slotbox.scale.setTo(slotbox_scale, slotbox_scale);
+        slotbox.anchor.setTo(slotbox_anchor_x, slotbox_anchor_y);
+
+        slotgreen_grp = game.add.group();
+        slotgreen = game.add.sprite(slotgreen_x-210,slotgreen_y, 'slotgreen');
+        slotgreen.scale.setTo(slotgreen_scale, slotgreen_scale);
+        slotgreen.anchor.setTo(slotgreen_anchor_x, slotgreen_anchor_y);
+        slotgreen.visible = false;
+
+        slotgreen_grp.add(slotgreen);
+        
+        slotgreen = game.add.sprite(slotgreen_x,slotgreen_y, 'slotgreen');
+        slotgreen.scale.setTo(slotgreen_scale, slotgreen_scale);
+        slotgreen.anchor.setTo(slotgreen_anchor_x, slotgreen_anchor_y);
+        slotgreen.visible = false;
+
+        slotgreen_grp.add(slotgreen);
+
+        slotgreen = game.add.sprite(slotgreen_x+210,slotgreen_y, 'slotgreen');
+        slotgreen.scale.setTo(slotgreen_scale, slotgreen_scale);
+        slotgreen.anchor.setTo(slotgreen_anchor_x, slotgreen_anchor_y);
+        slotgreen.visible = false;
+
+        slotgreen_grp.add(slotgreen);
+
+        slot_image_grp1 = game.add.group();
+        slot_image_grp2 = game.add.group();
+        slot_image_grp3 = game.add.group();
+
+        var images_array = ['apple', 'cherry', 'orange', 'seven', 'strawberry', 'watermelon'];
+        for(var i = 0 ; i < images_array.length ; i++){
+            slot_image = game.add.sprite(slot_image_x-210, slot_image_y, images_array[i]);
+            slot_image.scale.setTo(slot_image_scale, slot_image_scale);
+            slot_image.anchor.setTo(slot_image_anchor_x, slot_image_anchor_y);
+            slot_image.visible = false;
+            slot_image_grp1.add(slot_image);
+        }
+        
+        for(var i = 0 ; i < images_array.length ; i++){
+            slot_image = game.add.sprite(slot_image_x, slot_image_y, images_array[i]);
+            slot_image.scale.setTo(slot_image_scale, slot_image_scale);
+            slot_image.anchor.setTo(slot_image_anchor_x, slot_image_anchor_y);
+            slot_image.visible = false;
+            slot_image_grp2.add(slot_image);
+        }
+
+        for(var i = 0 ; i < images_array.length ; i++){
+            slot_image = game.add.sprite(slot_image_x+210, slot_image_y, images_array[i]);
+            slot_image.scale.setTo(slot_image_scale, slot_image_scale);
+            slot_image.anchor.setTo(slot_image_anchor_x, slot_image_anchor_y);
+            slot_image.visible = false;
+            slot_image_grp3.add(slot_image);
+        }
+
+        spinbutton = game.add.button(spinbutton_x, spinbutton_y, 'spinbutton', spinSlots, this, 2, 1, 0);
+        spinbutton.scale.setTo(spinbutton_scale, spinbutton_scale);
+    },
+
+    update: function () {
+        bluelight_glow++;
+        if(bluelight_glow < 15){
+            bluelight.alpha = 0.5;
+        }
+        else{
+            bluelight.alpha = 1;
+        }
+        if(bluelight_glow === 30){
+            bluelight_glow = 0;
+        }
+
+        if(spin_slot){
+            var temp_min = randomIntFromInterval(1, 6);
+            while(true){
+                var temp_max = randomIntFromInterval(1, 6);
+                if(temp_max > temp_min){
+                    break;
+                }
+            }
+            
+            slot1_res_rn = randomIntFromInterval(temp_min, temp_max);
+            slot2_res_rn = randomIntFromInterval(temp_min, temp_max);
+            slot3_res_rn = randomIntFromInterval(temp_min, temp_max);
+
+            counter_slot1 = 0;
+            counter_slot2 = 0;
+            counter_slot3 = 0;
+
+            slot_image_grp1.children[slot1_res_rn-1].visible = false;
+            slot_image_grp2.children[slot1_res_rn-1].visible = false;
+            slot_image_grp3.children[slot1_res_rn-1].visible = false;
+
+            slot1_temp_rn = 1;
+            slot2_temp_rn = 1;
+            slot3_temp_rn = 1;
+
+            slotgreen_grp.children[0].visible = false;
+            slotgreen_grp.children[1].visible = false;
+            slotgreen_grp.children[2].visible = false;
+
+            spin_slot = false;
+            playAnimationSlot = true;
+        }
+
+        if(playAnimationSlot){
+            animation_counter++;
+            if(animation_counter === 5){
+
+                counter_slot1++;
+                counter_slot2++;
+                counter_slot3++;
+
+                if(counter_slot1 > 20){
+                    slot_image_grp1.children[slot1_temp_rn-1].visible = false;
+                    slot_image_grp1.children[slot1_res_rn-1].visible = true;
+                    slotgreen_grp.children[0].visible = true;
+                }
+                else{
+                    slot_image_grp1.children[slot1_temp_rn-1].visible = false;
+                    slot1_temp_rn = randomIntFromInterval(1 , 6);
+                    slot_image_grp1.children[slot1_temp_rn-1].visible = true;
+                }
+                if(counter_slot2 > 30){
+                    slot_image_grp2.children[slot2_temp_rn-1].visible = false;
+                    slot_image_grp2.children[slot2_res_rn-1].visible = true;
+                    slotgreen_grp.children[1].visible = true;
+                }
+                else{
+                    slot_image_grp2.children[slot2_temp_rn-1].visible = false;
+                    slot2_temp_rn = randomIntFromInterval(1 , 6);
+                    slot_image_grp2.children[slot2_temp_rn-1].visible = true;
+                }
+                if(counter_slot3 > 40){
+                    slot_image_grp3.children[slot3_temp_rn-1].visible = false;
+                    slot_image_grp3.children[slot3_res_rn-1].visible = true;
+                    slotgreen_grp.children[2].visible = true;
+                    playAnimationSlot = false;
+                    if(slot1_res_rn === slot2_res_rn && slot1_res_rn === slot3_res_rn && slot2_res_rn === slot3_res_rn){
+                        alert('Winner');
+                    }
+                }
+                else{
+                    slot_image_grp3.children[slot3_temp_rn-1].visible = false;
+                    slot3_temp_rn = randomIntFromInterval(1 , 6);
+                    slot_image_grp3.children[slot3_temp_rn-1].visible = true;
+                }
+
+            }
+            if(animation_counter === 10){
+                animation_counter = 0;
+            }
+        }
+
+    },
+
+    render: function () {
+
+    }
+};
+
 game.state.add('bootState', bootState);
+
 game.state.add('roulletPreloadGame', roulletPreloadGame);
 game.state.add('roulletStartGame', roulletStartGame);
 game.state.add('roulletRenderGame', roulletRenderGame);
+
+game.state.add('bingoPreloadGame', bingoPreloadGame);
+game.state.add('bingoStartGame', bingoStartGame);
+game.state.add('bingoRenderGame', bingoRenderGame);
+
+game.state.add('slotsPreloadGame', slotsPreloadGame);
+game.state.add('slotsStartGame', slotsStartGame);
+game.state.add('slotsRenderGame', slotsRenderGame);
 
 game.state.start('bootState');
