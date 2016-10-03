@@ -1,4 +1,0 @@
- - Requests to python server are: <ip>:<port>/?{<JSON>}
- - Default port (if not mentioned on starting) is 1337
- 
-/** JSON FORMATS GO HERE **/

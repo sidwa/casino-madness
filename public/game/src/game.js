@@ -8,25 +8,191 @@
 // window.p2 = require('phaser/build/custom/p2');
 // window.Phaser = require('phaser/build/custom/phaser-split');
 
-/* New Phaser Instance*/
+/* Backend Functions */
+var server_url = 'http://localhost:800/';
+
+function getBets(){
+   	ajx=new XMLHttpRequest();
+	if(!ajx){
+		alert("Internet explorer not supported by this site!!!");
+		return;
+	}
+	if(ajx.readyState==4 || ajx.readyState==0){
+		ajx.open("GET",server_url+"getBets",false);
+		ajx.send();
+		var response;
+		response=this.responseText;
+		return response;
+	}
+}
+
+function getPlayers(){
+    ajx=new XMLHttpRequest();
+    if(!ajx){
+        alert("Internet explorer not supported by this site!!!");
+        return;
+    }
+    ajx.open("GET",server_url+"getPlayers",false);
+    ajx.send();
+    var response;
+    response=ajx.responseText;
+    return response;
+}
+
+function payout(){
+    ajx=new XMLHttpRequest();
+    if(!ajx){
+        alert("Internet explorer not supported by this site!!!");
+        return;
+    }
+    ajx.open("GET",server_url+"payout",false);
+    ajx.send();
+    var response;
+    response=ajx.responseText;
+    return response;
+}
+
+function timer(){
+    ajx=new XMLHttpRequest();
+    if(!ajx){
+        alert("Internet explorer not supported by this site!!!");
+        return;
+    }
+    ajx.open("GET",server_url+"timer",false);
+    ajx.send();
+    var response;
+    response=ajx.responseText;
+    var num=parseInt(response,10);
+    return num;
+}
+
+function initGame(game_id){
+	ajx=new XMLHttpRequest();
+    if(!ajx){
+        alert("Internet explorer not supported by this site!!!");
+        return;
+    }
+    if(ajx.readyState==4 || ajx.readyState==0){
+        ajx.open("GET",server_url+"/player?"+game_id,true);
+        ajx.onreadystatechange=serverResponse;
+        ajx.setRequestHeader("Content-type", "application/json");
+        console.log(JSON.stringify(obj));
+        ajx.send(JSON.stringify(obj));
+    }
+    function serverResponse(){
+        var response;
+        if(ajx.readyState==4 && ajx.status==200){
+            response=this.responseText;
+            if(response.search(/not logged in/i)!=-1){
+                document.getElementById("out").innerHTML=response;
+            }else{
+                //call your function here
+            }
+        }
+    }
+}
+
+function getBingoNumber(){
+	ajx=new XMLHttpRequest();
+    if(!ajx){
+        alert("Internet explorer not supported by this site!!!");
+        return;
+    }
+    ajx.open("GET",server_url+"/getBingoNumber",false);
+    ajx.send();
+    var response;
+    response=ajx.responseText;
+    response=response.split(",");
+    for(var i=0;i<response.length;i++){
+        response[i]=parseInt(response[i],10);
+    }
+    return response;
+}
+
+function bingoReady(){
+	ajx=new XMLHttpRequest();
+	if(!ajx){
+		alert("Internet explorer not supported by this site!!!");
+	return;
+	}
+	ajx.open("GET",server_url+"/getBingoNumber",false);
+	ajx.send();
+	var response;
+	response=ajx.responseText;
+	response=response.split(",");
+	for(var i=0;i<response.length;i++){
+		response[i]=parseInt(response[i],10);
+	}
+	return response;
+}
+
+function updatePlayer(won , coins, coins_won){
+    this.won = won;
+    this.coins = coins;
+    this.coins_won = coins_won;
+    ajx=new XMLHttpRequest();
+    if(!ajx){
+        alert("Internet explorer not supported by this site!!!");
+        return;
+    }
+    ajx.open("GET",server_url+"updatePlayer?won="+this.won+"&coins="+this.coins+"&coins_won="+this.coins_won,false);
+    ajx.send();
+    var response;
+}
+
+function putBet(bets){
+	ajx=new XMLHttpRequest();
+	if(!ajx){
+		alert("Internet explorer not supported by this site!!!");
+		return;
+	}
+	ajx.open("POST",site+"putBet",false);
+	ajx.setRequestHeader("Content-type", "application/json");
+	console.log(confirmBet());
+	ajx.send(confirmBet());
+	return ajx.responseText;
+}
+
+function getPlayer(){
+	ajx=new XMLHttpRequest();
+	if(!ajx){
+		alert("Internet explorer not supported by this site!!!");
+		return;
+	}
+	ajx.open("GET",server_url+"/player",false);
+	ajx.send();
+	var response;
+	//response=JSON.parse(this.responseText);
+	response=ajx.responseText;
+	return response;
+	//do whatever you want with response
+}
+
 $.urlParam = function(name){
 	var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
 	return results[1] || 0;
 };
+var gameid = parseInt($.urlParam('gameid'));
+var username = getPlayer();
+var color;
+var cashbalance;
 
-function userinfo (userid){
-    var json = {"username": "mit17k", "color":"blue", "cashbalance": 25000, "lobbyid": 3, "gameid":3};
+/* {username:"mit17k",coins:"10000",color:"red"} */
+//var players_list = JSON.parse(getPlayers());
 
-    return json;
+var playersInfo = JSON.parse(getPlayers());
+for(var i = 0 ; i < playersInfo.length ; i++){
+    if(username === playersInfo[i].username){
+        color = playersInfo[i].color;
+        cashbalance = playersInfo[i].cashbalance;
+        break;
+    }
+}
+if(color === null && cashbalance === null){
+    console.log('DATABASE ERROR! NO USER INFO FOUND');
 }
 
-var username = $.urlParam('username');
-var user_info = userinfo(username);
-var color = user_info.color;
-var cashbalance = user_info.cashbalance;
-var lobbyid = user_info.lobbyid;
-var gameid = user_info.gameid;
-
+/* New Phaser Instance*/
 var game = new Phaser.Game(1366, 768, Phaser.CANVAS);
 
 var loading;
@@ -58,6 +224,7 @@ bootState.prototype = {
         game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
         game.time.desiredFps = 60;
         game.input.mouse.capture = true;
+        
         if(gameid === 1){
             game.state.start('roulletPreloadGame');
         }
@@ -203,6 +370,11 @@ var current_bets_credits;
 var current_bets_credits_x = (1366/2)-490;
 var current_bets_credits_y = (768/2)+280;
 
+var other_players_grp;
+var other_players_names;
+var other_players_balance;
+var select_num = null;
+
 /* input */
 var selected_chip_value = null;
 var chip_select;
@@ -212,6 +384,9 @@ var normal_input_mode = false;
 var bet_input = [];
 var final_bets_json_object = [];
 var final_bet_json_string = null;
+var input_roulette = false;
+var temp_new_user_info;
+var callcounter = false;
 
 /* poker chip render */
 var chip_group = [];
@@ -290,6 +465,10 @@ SELECTOR = function (game, slot_number) {
 
 SELECTOR.prototype.play = function () {
     this.spinTween = game.add.tween(this.selector_sprite).to({ angle: 360 * this.rounds + this.selector_angle }, this.time, Phaser.Easing.Quadratic.InOut, true);
+};
+
+SELECTOR.prototype.removeSelector = function () {
+    this.selector_sprite.destroy();
 };
 
 POKER_CHIP = function (game, color, slot_info, chip_value, isRandom) {
@@ -557,8 +736,51 @@ CHIP_SELECTOR.prototype.createSelector = function (){
     }
 };
 
-CHIP_SELECTOR.prototype.removeSelector = function (chip_value){
+CHIP_SELECTOR.prototype.removeSelector = function (){
     this.chip_selector.destroy();
+};
+
+var other_players_positions =  [{"x": 750}, {"x": 850}, {"x": 950}, {"x": 1050}];
+OTHER_PLAYER = function (index){
+    
+    this.index = index;
+
+    this.position_x = other_players_positions[this.index].x;
+
+    this.player = game.add.sprite(main_user_avatar_x+this.position_x, main_user_avatar_y, 'avatar2');
+    this.player.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
+    this.player.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
+
+    
+    var player_cashbalance = game.add.bitmapText(main_user_name_x+position_x+20, main_user_name_y+25, 'blackrose', player_info.coins, 25);
+
+};
+OTHER_PLAYER.prototype.removePlayerAvatar = function (){
+    this.player.destroy();
+};
+
+OTHER_PLAYER_USERNAME = function (uid, index){
+    
+    this.uid = uid;
+    this.index = index;
+    this.position_x = other_players_positions[this.index].x;
+    this.player_username = game.add.bitmapText(main_user_name_x+this.position_x+20, main_user_name_y, 'blackrose', this.uid, 25);
+
+};
+OTHER_PLAYER_USERNAME.prototype.removePlayerName = function (){
+    this.player_username.destroy();
+};
+
+OTHER_PLAYER_CASHBALANCE = function (cashbalance, index){
+    
+    this.cashbalance = cashbalance;
+    this.index = index;
+    this.position_x = other_players_positions[this.index].x;
+    this.player_cashbalance = game.add.bitmapText(main_user_name_x+this.position_x+20, main_user_name_y, 'blackrose', this.cashbalance, 25);
+
+};
+OTHER_PLAYER_CASHBALANCE.prototype.removePlayerCashbalance = function (){
+    this.player_cashbalance.destroy();
 };
 
 function startRoullet() {
@@ -749,7 +971,7 @@ function place_bet(bet_input){
         {"slot_name": "slot_17" , "slot_value": "17"},
         {"slot_name": "slot_18" , "slot_value": "18"},
         {"slot_name": "slot_19" , "slot_value": "19"},
-        {"slot_name": "slot_20" , "slot_value": "20"},
+        {"slot_name": "slot_20" , "slot_value": "20"},           
         {"slot_name": "slot_21" , "slot_value": "21"},
         {"slot_name": "slot_22" , "slot_value": "22"},
         {"slot_name": "slot_23" , "slot_value": "23"},
@@ -831,6 +1053,7 @@ function place_bet(bet_input){
     }
     final_bet_json_string = JSON.stringify(final_bets_json_object);
     drawBets(final_bet_json_string, 'blue', false);
+    console.log(final_bet_json_string);
     return true;
 }
 
@@ -1152,7 +1375,7 @@ roulletRenderGame.prototype = {
         else if(color === "red"){
             main_user_avatar = game.add.sprite(main_user_avatar_x, main_user_avatar_y, 'avatar5');
         }
-
+        
         main_user_avatar.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
         main_user_avatar.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
         
@@ -1164,35 +1387,18 @@ roulletRenderGame.prototype = {
         removebets = game.add.button(removebets_x, removebets_y, 'removebets', removeAllBets, this, 2, 1, 0);
         removebets.scale.setTo(removebets_scale, removebets_scale);
 
-        /* temp */
-        var temp1 = game.add.sprite(main_user_avatar_x+750, main_user_avatar_y, 'avatar2');
-        temp1.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
-        temp1.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
-
-        var temp1_text1 = game.add.bitmapText(main_user_name_x+770, main_user_name_y, 'blackrose', 'dranzor', 25);
-        var temp1_text2 = game.add.bitmapText(main_user_name_x+770, main_user_name_y+25, 'blackrose', 25000, 25);
-
-        var temp2 = game.add.sprite(main_user_avatar_x+850, main_user_avatar_y, 'avatar3');
-        temp2.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
-        temp2.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
-
-        var temp2_text1 = game.add.bitmapText(main_user_name_x+870, main_user_name_y, 'blackrose', 'sidwa', 25);
-        var temp2_text2 = game.add.bitmapText(main_user_name_x+870, main_user_name_y+25, 'blackrose', 25000, 25);
-
-        var temp3 = game.add.sprite(main_user_avatar_x+950, main_user_avatar_y, 'avatar4');
-        temp3.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
-        temp3.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
-
-        var temp3_text1 = game.add.bitmapText(main_user_name_x+970, main_user_name_y, 'blackrose', 'sidwa', 25);
-        var temp3_text2 = game.add.bitmapText(main_user_name_x+970, main_user_name_y+25, 'blackrose', 25000, 25);
-
-        var temp4 = game.add.sprite(main_user_avatar_x+1050, main_user_avatar_y, 'avatar5');
-        temp4.scale.setTo(main_user_avatar_scale, main_user_avatar_scale);
-        temp4.anchor.setTo(main_user_avatar_anchor_x, main_user_avatar_anchor_y);
-
-        var temp4_text1 = game.add.bitmapText(main_user_name_x+1070, main_user_name_y, 'blackrose', 'sidwa', 25);
-        var temp4_text2 = game.add.bitmapText(main_user_name_x+1070, main_user_name_y+25, 'blackrose', 25000, 25);
-
+        if(playersInfo.length > 1){
+            for(var i = 0 ; i < playersInfo.length ; i++){
+                if(username !== playersInfo[i].username){
+                    other_players_grp.push(new OTHER_PLAYER(i));
+                    other_players_names.push(new OTHER_PLAYER_USERNAME(playersInfo[i].username, i));
+                    other_players_balance.push(new OTHER_PLAYER_CASHBALANCE(playersInfo[i].coins, i));
+                }
+            }
+        }
+        else if(playersInfo.length > 5){
+            console.log('ERROR! UNKNOWN PLAYER');
+        }
     },
 
     update: function() {
@@ -1217,7 +1423,7 @@ roulletRenderGame.prototype = {
             if (checkOverlap(item, pointer)) {
                 item.alpha = 0.5
                 if (game.input.activePointer.leftButton.isDown) {
-                    if(selected_chip_value + current_bets_value <= cashbalance){
+                    if(selected_chip_value + current_bets_value <= cashbalance && input_roulett){
                         if ($.inArray(item.key, bet_input) === -1) {
                             bet_input.push(item.key); 
                         }
@@ -1243,7 +1449,7 @@ roulletRenderGame.prototype = {
             sprite.alpha = 1;
         }, this);
         special_slots.onChildInputDown.add(function (sprite) {
-            if(bet_limiter && (selected_chip_value + current_bets_value <= cashbalance)){
+            if(bet_limiter && (selected_chip_value + current_bets_value <= cashbalance) && input_roulett){
                 bet_limiter = false;
                 bet_input = [];
                 bet_input.push(sprite.key);
@@ -1286,6 +1492,51 @@ roulletRenderGame.prototype = {
         credit_balance.text = 'Balance:'+cashbalance;
         current_bets_credits.text = 'Bets:'+current_bets_value;
 
+        var new_player_list = JSON.parse(getPlayers());
+        if(!compareArrayEquality(new_player_list, playersInfo)){
+            for(var i = playersInfo.length-1 ; i < new_player_list.length ; i++){
+                other_players_grp.push(new OTHER_PLAYER(i));
+                other_players_names.push(new OTHER_PLAYER_USERNAME(new_player_list[i].username, i));
+                other_players_balance.push(new OTHER_PLAYER_CASHBALANCE(new_player_list[i].coins, i));
+                playersInfo.push(new_player_list[i]);
+            }
+        }
+
+        /* backend functions */
+        var round_time = timer();
+        if(round_time === null && callcounter){
+            
+            input_roulette = false;
+            callcounter = false;
+
+            putBets(final_bet_json_string);
+            var temp_res = JSON.parse(getBets());
+
+            for (var i = 0 ; i < temp_res.length ; i++){
+                if(temp_res[i].username !== username){
+                    drawBets(JSON.stringify(temp_res[i]), temp_res[i].color, true);
+                }
+            }
+
+            var rn = temp_res[0].rn;
+            select_num = new SELECTOR(game , rn);
+            select_num.play();
+
+            payout();
+            temp_new_user_info = JSON.parse(getPlayers());
+            for(var i = 0 ; i < temp_new_user_info.length ; i++){
+                other_players_balance[i].text = temp_new_user_info[i].coins;
+            }
+        }
+        else {
+            if(select_num !== null){
+                select_num.removeSelector();
+                select_num = null;
+            }
+
+            callcounter = true;
+            input_roulett = true;
+        }
     },
 
     render: function() {
@@ -1415,7 +1666,7 @@ function generateBingoSheetNumbers (){
     var i = 0;
     var bingo_numbers_array = [];
     while(i < 50){
-        var random = randomIntFromInterval(1 , 100);
+        var random = randomIntFromInterval(1 , 75);
         if(!isInArray(random , bingo_numbers_array)){
             bingo_numbers_array.push(random);
             i++;
@@ -1452,46 +1703,51 @@ function getIndex(num, group) {
 }
 
 function isWinCondition (){
-    var won = false;
+    var won = 0;
     if(bingo_marked_index.length > 5){
         if(isInArray(0, bingo_marked_index) && isInArray(1, bingo_marked_index) && isInArray(2, bingo_marked_index) && isInArray(3, bingo_marked_index) && isInArray(4, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(5, bingo_marked_index) && isInArray(6, bingo_marked_index) && isInArray(7, bingo_marked_index) && isInArray(8, bingo_marked_index) && isInArray(9, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(10, bingo_marked_index) && isInArray(11, bingo_marked_index) && isInArray(12, bingo_marked_index) && isInArray(13, bingo_marked_index) && isInArray(14, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(15, bingo_marked_index) && isInArray(16, bingo_marked_index) && isInArray(17, bingo_marked_index) && isInArray(18, bingo_marked_index) && isInArray(19, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(20, bingo_marked_index) && isInArray(21, bingo_marked_index) && isInArray(22, bingo_marked_index) && isInArray(23, bingo_marked_index) && isInArray(24, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(0, bingo_marked_index) && isInArray(5, bingo_marked_index) && isInArray(10, bingo_marked_index) && isInArray(15, bingo_marked_index) && isInArray(20, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(1, bingo_marked_index) && isInArray(6, bingo_marked_index) && isInArray(11, bingo_marked_index) && isInArray(16, bingo_marked_index) && isInArray(21, bingo_marked_index)){
             won = true;
         }
         else if(isInArray(2, bingo_marked_index) && isInArray(7, bingo_marked_index) && isInArray(12, bingo_marked_index) && isInArray(17, bingo_marked_index) && isInArray(22, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(3, bingo_marked_index) && isInArray(8, bingo_marked_index) && isInArray(13, bingo_marked_index) && isInArray(18, bingo_marked_index) && isInArray(23, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(4, bingo_marked_index) && isInArray(9, bingo_marked_index) && isInArray(14, bingo_marked_index) && isInArray(19, bingo_marked_index) && isInArray(24, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(0, bingo_marked_index) && isInArray(6, bingo_marked_index) && isInArray(12, bingo_marked_index) && isInArray(18, bingo_marked_index) && isInArray(24, bingo_marked_index)){
-            won = true;
+            won++;
         }
         else if(isInArray(4, bingo_marked_index) && isInArray(8, bingo_marked_index) && isInArray(12, bingo_marked_index) && isInArray(16, bingo_marked_index) && isInArray(20, bingo_marked_index)){
-            won = true;
+            won++;
         }
     }
-    return won;
+    if(won >= 5){
+        return true;
+    }
+    else{
+        return false;
+    }
 }
 
 /* test purpose */
@@ -1599,7 +1855,7 @@ bingoRenderGame.prototype = {
         if(test_counter === 60 && current_bingo_number_index < 50){
             var num_status = true;
             while (num_status){
-                var temp_num = randomIntFromInterval(1, 100);
+                var temp_num = randomIntFromInterval(1, 75);
                 if(!isInArray(temp_num, bingo_numbers_history)){
                     bingo_numbers_history.push(temp_num);
                     num_status = false;

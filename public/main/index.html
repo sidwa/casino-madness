@@ -1,24 +1,29 @@
 <!doctype html>
 <html lang="en" class="no-js">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,700,400' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" type="text/css" href="css/demo.css">
-	<link rel="stylesheet" href="css/reset.css"> <!-- CSS reset -->
-	<link rel="stylesheet" href="css/style.css"> <!-- Resource style -->
+	<link rel="stylesheet" href="css/reset.css">
+	<!-- CSS reset -->
+	<link rel="stylesheet" href="css/style.css">
+	<!-- Resource style -->
 	<link rel="stylesheet" type="text/css" href="css/iziModal.min.css">
-	<script src="js/modernizr.js"></script> <!-- Modernizr -->
-  	
+	<script src="js/modernizr.js"></script>
+	<!-- Modernizr -->
+
 	<title>Video - Animated Intro Section | CodyHouse</title>
 </head>
+
 <body>
 
-<section class="cd-intro video">
-	<div class="cd-intro-content video">
-		<h1 class="svg-wrapper">
-			<!-- <svg class="svg-mask" x="0px" y="0px" width="4000px" height="3000px" viewBox="0 0 4000 3000">
+	<section class="cd-intro video">
+		<div class="cd-intro-content video">
+			<h1 class="svg-wrapper">
+				<!-- <svg class="svg-mask" x="0px" y="0px" width="4000px" height="3000px" viewBox="0 0 4000 3000">
 			 <title>Video Effect</title>
 				<path fill="#FFFFFF" d="M1836.9,1488h-2.9v24h2.1c3.5,0,6.1-1,7.7-3.1s2.5-5.2,2.5-9.4c0-3.9-0.8-6.8-2.3-8.7
 					C1842.5,1488.9,1840.1,1488,1836.9,1488z"/>
@@ -56,49 +61,122 @@
 				<path fill="#FFFFFF" d="M993.2,1466.4c1.6-2,2.5-5.2,2.5-9.4c0-3.9-0.8-6.8-2.3-8.7c-1.6-1.9-3.9-2.8-7.1-2.8h-3.4v24h2.6
 					C989,1469.5,991.6,1468.5,993.2,1466.4z"/>
 			</svg> -->
-	    </h1>
-		<p>Casino Madness</p>
-		
-		<div class="action-wrapper">
-			<a href="#" class="cd-btn main-action trigger-custom">Get started</a>
-			<a href="#" class="cd-btn trigger-customx">Learn More</a>
-		</div>
+			</h1>
+			<p>Casino Madness</p>
 
-	    <div id="modal-custom" class="iziModal" data-izimodal-group="grupo1" aria-hidden="true" aria-labelledby="modal-custom" role="dialog" style="z-index: 999; border-radius: 3px; margin-left: -300px; max-width: 600px; margin-top: -168px; display: none;"><div class="iziModal-wrap" style="height: auto;"><div class="iziModal-content" style="padding: 0px;">
-	        <button data-izimodal-close="" class="icon-close" style="background: rgb(221, 221, 221) none repeat scroll 0% 0%;">X</button>
-	        <header>
-	            <a href="" id="signin" class="active">Sign in</a>
-	            <a href="" class="">New Account</a>
-	        </header>
-	        <section class="">
-	            <input placeholder="Username" type="text">
-	            <input placeholder="Password" type="password">
-	            <footer>
-	                <button data-izimodal-close="">Cancel</button>
-	                <button class="submit">Log in</button>            
-	            </footer>
-	        </section>
-	        <section class="hide">
-	            <input placeholder="Username" type="text">
-	            <input placeholder="Email" type="text">
-	            <input placeholder="Password" type="password">
-	            <label for="check"><input name="checkbox" id="check" value="1" type="checkbox"> I agree to the <u>Terms</u>.</label>
-	            <footer>
-	                <button data-izimodal-close="" data-izimodal-transitionout="bounceOutDown">Cancel</button>
-	                <button class="submit">Create Account</button>            
-	            </footer>
-	        </section>
-	    </div></div></div>
+			<div class="action-wrapper">
+				<a href="#" class="cd-btn main-action trigger-custom">Get started</a>
+				<a href="#" class="cd-btn trigger-customx">Learn More</a>
+			</div>
 
-		<div class="cd-bg-video-wrapper" data-video="assets/video">
-			<!-- video element will be loaded using jQuery -->
+			<div id="modal-custom" class="iziModal" data-izimodal-group="grupo1" aria-hidden="true" aria-labelledby="modal-custom" role="dialog"
+				style="z-index: 999; border-radius: 3px; margin-left: -300px; max-width: 600px; margin-top: -168px; display: none;">
+				<div class="iziModal-wrap" style="height: auto;">
+					<div class="iziModal-content" style="padding: 0px;">
+						<button data-izimodal-close="" class="icon-close" style="background: rgb(221, 221, 221) none repeat scroll 0% 0%;">X</button>
+						<header>
+							<a href="" id="signin" class="active">Sign in</a>
+							<a href="" class="">New Account</a>
+						</header>
+						<section class="">
+							<input placeholder="Username" type="text">
+							<input placeholder="Password" type="password">
+							<footer>
+								<button data-izimodal-close="">Cancel</button>
+								<button class="submit">Log in</button>
+							</footer>
+						</section>
+						<section class="hide">
+							<input placeholder="Username" type="text" id="username">
+							<input placeholder="Email" type="text">
+							<input placeholder="Password" type="password" id="password">
+							<label for="check"><input name="checkbox" id="check" value="1" type="checkbox"> I agree to the <u>Terms</u>.</label>
+							<footer>
+								<button data-izimodal-close="" data-izimodal-transitionout="bounceOutDown">Cancel</button>
+								<button class="submit" id="submit">Create Account</button>
+							</footer>
+							<div id="out"></div>
+						</section>
+					</div>
+				</div>
+			</div>
+
+			<div class="cd-bg-video-wrapper" data-video="assets/video">
+				<!-- video element will be loaded using jQuery -->
+			</div>
 		</div>
-	</div>
-</section>
-	
-<script src="js/jquery-2.1.4.js"></script>
-<script src="js/main.js"></script> <!-- Resource jQuery -->
-<script type="text/javascript" src="js/iziModal.min.js"></script>
-<script type="text/javascript" src="js/demo.js"></script>
+	</section>
+
+	<script src="js/jquery-2.1.4.js"></script>
+	<script src="js/main.js"></script>
+	<!-- Resource jQuery -->
+	<script type="text/javascript" src="js/iziModal.min.js"></script>
+	<script type="text/javascript" src="js/demo.js"></script>
 </body>
+
 </html>
+
+<!--
+	ajx for udername ataken /isUnTaken
+	ajx for registratiom
+
+ -->
+<script>
+	document.getElementById("submit").onclick=function(){
+		ajx=new XMLHttpRequest();
+		if(!ajx){
+			alert("Internet explorer not supported by this site");
+		return;
+		}
+		if(ajx.readyState==4 || ajx.readyState==0){
+			var un=document.getElementById("username").value;
+			var pass=document.getElementById("password").value;
+			var obj = new Object();
+			obj.username=un;
+			obj.password=pass;
+			ajx.open("POST","login",true);
+			ajx.onreadystatechange=serverResponse;
+			ajx.setRequestHeader("Content-type","application/json");
+			ajx.send(JSON.stringify(obj));
+		}
+		function serverResponse(){
+			var response;
+			if(ajx.readyState==4 && ajx.status==4){
+				response=this.responseText;
+				if(response.search(/login failed/i)!=-1){
+					document.getElementById("").innerHTML=response;
+				}
+				else
+				{
+					window.location=response;
+				}
+			}
+		}
+	}
+
+		document.getElementById("username").onkeyup=function(){
+		ajx=new XMLHttpRequest();
+		if(!ajx){
+			alert("Internet explorer not supported by this site");
+		return;
+		}
+		if(ajx.readyState==4 || ajx.readyState==0){
+			ajx.open("POST","login",true);
+			ajx.onreadystatechange=serverResponse;
+			ajx.setRequestHeader("Content-type","application/json");
+			ajx.send(JSON.stringify(obj));
+		}
+		function serverResponse(){
+			var response;
+			if(ajx.readyState==4 && ajx.status==4){
+				response=this.responseText;
+				if(response.search(/login failed/i)!=-1){
+					document.getElementById("").innerHTML=response;
+				}
+				else
+				{
+					window.location=response;
+				}
+			}
+		}
+	}
