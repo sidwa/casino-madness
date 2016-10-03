@@ -1,9 +1,16 @@
-/*JSON FORMAT                                                   array of bet objects
+/*JSON FORMAT  bets format                                       array of bet objects
     [                                     
 		{username:"mit17k",th:0,fi:0,hu:6,slots:[1,2,3,4]},		username must with each bet objects
 		{username:"mit17k",th:0,fi:0,hu:6,slots:["1stin12"]}
 	]
 */
+/*JSON format get player in lobby
+	[
+		{username:"mit17k",coins:"10000",color:"red"},
+		{username:"sidwa",coins:"11000",color:"red"}
+	]
+*/
+
 
 // required Global variables
 var bets=[];
