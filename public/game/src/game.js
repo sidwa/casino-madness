@@ -67,29 +67,61 @@ function timer(){
 }
 
 function initGame(game_id){
-	ajx=new XMLHttpRequest();
-    if(!ajx){
-        alert("Internet explorer not supported by this site!!!");
-        return;
-    }
-    if(ajx.readyState==4 || ajx.readyState==0){
-        ajx.open("GET",server_url+"/player?game_id="+game_id,true);
-        ajx.onreadystatechange=serverResponse;
-        ajx.setRequestHeader("Content-type", "application/json");
-        console.log(JSON.stringify(obj));
-        ajx.send(JSON.stringify(obj));
-    }
-    function serverResponse(){
-        var response;
-        if(ajx.readyState==4 && ajx.status==200){
-            response=this.responseText;
-            if(response.search(/not logged in/i)!=-1){
-                document.getElementById("out").innerHTML=response;
-            }else{
-                //call your function here
-            }
-        }
-    }
+			if(game_id==1){
+				enterRouletteLobby();
+			}else if(game_id==2){
+				enterBingoLobby();
+			}
+			ajx=new XMLHttpRequest();
+			if(!ajx){
+			alert("Internet explorer not supported by this site!!!");
+			return;
+			}
+			if(ajx.readyState==4 || ajx.readyState==0){
+				ajx.open("GET",site+"player?game_id="+game_id,true);
+				ajx.onreadystatechange=serverResponse;
+				ajx.send();
+			}
+			function serverResponse(){
+				var response;
+				if(ajx.readyState==4 && ajx.status==200){
+					//response=JSON.parse(this.responseText);
+					response=this.responseText;
+					//document.getElementById("out").innerHTML=response;
+					//var host=location.hostname;
+					if(response.search(/not logged in/i)!=-1){
+						document.getElementById("out").innerHTML=response;
+					}else{
+						//call your function here
+					}
+				}
+			}
+}
+
+function enterRouletteLobby() {
+	ajx = new XMLHttpRequest();
+	if (!ajx) {
+		alert("Internet explorer not supported by this site!!!");
+		return;
+	}
+	ajx.open("GET", site + "enterRouletteLobby", false);
+	ajx.send();
+	var response;
+	//response = JSON.parse(ajx.responseText);
+	response = ajx.responseText; //[lobby_id,colour];
+	return response;
+}
+
+function leaveRouletteLobby() {
+	ajx = new XMLHttpRequest();
+	if (!ajx) {
+		alert("Internet explorer not supported by this site!!!");
+		return;
+	}
+	ajx.open("GET", site + "leaveRouletteLobby", false);
+	ajx.send();
+	var response;
+	response = ajx.responseText;
 }
 
 function getBingoNumber(){
@@ -166,6 +198,44 @@ function getPlayer(game_id){
 	response=ajx.responseText;
 	return response;
 	//do whatever you want with response
+}
+
+function enterBingoLobby(lobby_id) {
+	ajx = new XMLHttpRequest();
+	if (!ajx) {
+		alert("Internet explorer not supported by this site!!!");
+		return;
+	}
+	ajx.open("GET", site + "enterBingoLobby?lobby_id=" + lobby_id, false);
+	ajx.send();
+	var response;
+	response = ajx.responseText;
+}
+
+function leaveBingoLobby() {
+	ajx = new XMLHttpRequest();
+	if (!ajx) {
+		alert("Internet explorer not supported by this site!!!");
+		return;
+	}
+	ajx.open("GET", site + "leaveBingoLobby", false);
+	ajx.send();
+	var response;
+	response = ajx.responseText;
+}
+
+// status="start" when lobby start, status="win" when player wins 
+// order of status will be start, win, win, win, start, win,...
+function updateBingo(lobby_id, status) {
+	ajx = new XMLHttpRequest();
+	if (!ajx) {
+		alert("Internet explorer not supported by this site!!!");
+		return;
+	}
+	ajx.open("GET", site +  "updateBingo?lobby_id=" + lobby_id + "&status=" + status, false);
+	ajx.send();
+	var response;
+	response = ajx.responseText;
 }
 
 $.urlParam = function(name){
