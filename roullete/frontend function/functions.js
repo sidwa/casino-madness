@@ -18,13 +18,13 @@ function getBets(){
 	}
 }
 
-function getPlayer(){
+function getPlayer(game_id){
 	ajx=new XMLHttpRequest();
 	if(!ajx){
 		alert("Internet explorer not supported by this site!!!");
 		return;
 	}
-	ajx.open("GET",site+"player",false);
+	ajx.open("GET",site+"player?game_id="+game_id,false);
 	ajx.send();
 	var response;
 	//response=JSON.parse(this.responseText);

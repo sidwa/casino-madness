@@ -73,7 +73,7 @@ function initGame(game_id){
         return;
     }
     if(ajx.readyState==4 || ajx.readyState==0){
-        ajx.open("GET",server_url+"/player?"+game_id,true);
+        ajx.open("GET",server_url+"/player?game_id="+game_id,true);
         ajx.onreadystatechange=serverResponse;
         ajx.setRequestHeader("Content-type", "application/json");
         console.log(JSON.stringify(obj));
@@ -153,13 +153,13 @@ function putBet(bets){
 	return ajx.responseText;
 }
 
-function getPlayer(){
+function getPlayer(game_id){
 	ajx=new XMLHttpRequest();
 	if(!ajx){
 		alert("Internet explorer not supported by this site!!!");
 		return;
 	}
-	ajx.open("GET",server_url+"/player",false);
+	ajx.open("GET",server_url+"/player?game_id="+game_id,false);
 	ajx.send();
 	var response;
 	//response=JSON.parse(this.responseText);
