@@ -115,7 +115,7 @@ function bingoReady(){
 		alert("Internet explorer not supported by this site!!!");
 	return;
 	}
-	ajx.open("GET",server_url+"/getBingoNumber",false);
+	ajx.open("GET",server_url+"/bingoReady",false);
 	ajx.send();
 	var response;
 	response=ajx.responseText;
